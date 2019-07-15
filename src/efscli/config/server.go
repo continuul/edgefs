@@ -28,7 +28,7 @@ import (
 	"os"
 	"strconv"
 
-	"../efsutil"
+	"github.com/Nexenta/edgefs/src/efscli/efsutil"
 	"github.com/spf13/cobra"
 )
 

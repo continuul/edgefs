@@ -30,7 +30,7 @@ import "C"
 import "unsafe"
 
 import (
-	"../efsutil"
+	"github.com/Nexenta/edgefs/src/efscli/efsutil"
 	"fmt"
 	"github.com/spf13/cobra"
 	"os"

@@ -24,8 +24,8 @@
 package device
 
 import (
-	"../config"
-	"../efsutil"
+	"github.com/Nexenta/edgefs/src/efscli/config"
+	"github.com/Nexenta/edgefs/src/efscli/efsutil"
 	"bytes"
 	"encoding/json"
 	"fmt"

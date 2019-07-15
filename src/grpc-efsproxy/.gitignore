@@ -2,6 +2,7 @@ tenant/*.pb.go
 service/*.pb.go
 cluster/*.pb.go
 snapshot/*.pb.go
+object/*.pb.go
 .get
 .proto
 src/

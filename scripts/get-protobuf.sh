@@ -21,7 +21,7 @@ unzip protoc-${_VERSION}-linux-x86_64.zip -d protoc3
 
 # Move protoc to /usr/local/bin/
 mkdir -p ./bin
-mv protoc3/bin/* ./bin/
+mv protoc3/bin/* ${NEDGE_HOME}/src/bin/
 rm -rf protoc3 protoc-*.zip
 
 # Move protoc3/include to /usr/local/include/

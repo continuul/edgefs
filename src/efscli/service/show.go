@@ -35,8 +35,8 @@ import (
 	"strings"
 	"time"
 
-	"../efsutil"
-	"../validate"
+	"github.com/Nexenta/edgefs/src/efscli/efsutil"
+	"github.com/Nexenta/edgefs/src/efscli/validate"
 
 	"github.com/im-kulikov/sizefmt"
 	"github.com/olekukonko/tablewriter"

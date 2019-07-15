@@ -30,8 +30,8 @@ import "C"
 import "unsafe"
 
 import (
-	"../efsutil"
-	"../validate"
+	"github.com/Nexenta/edgefs/src/efscli/efsutil"
+	"github.com/Nexenta/edgefs/src/efscli/validate"
 	"errors"
 	"fmt"
 	"github.com/spf13/cobra"

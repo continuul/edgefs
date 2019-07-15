@@ -1,2 +1,5 @@
 .ccow-build
 .ccow-configure
+src
+bin
+

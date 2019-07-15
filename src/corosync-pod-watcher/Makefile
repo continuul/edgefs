@@ -14,7 +14,7 @@ endif
 
 endif
 
-TARGET := efscli
+TARGET := corosync-pod-watcher
 SRCS := main.go $(wildcard */*.go)
 
 .PHONY: all clean
@@ -24,13 +24,12 @@ SRCS := main.go $(wildcard */*.go)
 	touch $@
 
 $(TARGET): $(SRCS) .get
-	GOPATH=$(SRCDIR)/src CGO_LDFLAGS="-L$(SRCDIR)/lib $(DEBUG_LDFLAGS) -lccow -lccowutil -lauditd -lccowfsio -lnanomsg" \
+	GOPATH=$(SRCDIR)/src  CGO_LDFLAGS="-L$(SRCDIR)/lib $(DEBUG_LDFLAGS) -lccow -lccowutil -lauditd -lccowfsio -lnanomsg" \
 		CGO_CFLAGS="$(DEBUG_FLAGS) -I$(SRCDIR)/include/ccow -I$(SRCDIR)/include" \
-		go build -o efscli main.go
+		go build -o $(TARGET) main.go
 
 fmt:
-	gofmt -e -s -w bucket cluster config efsutil main.go service system \
-		tenant validate object
+	gofmt -e -s -w main.go
 
 clean:
 	rm -rf $(TARGET) .get

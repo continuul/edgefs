@@ -36,7 +36,7 @@ import (
 	"bufio"
 	"fmt"
 	"time"
-	"../efsutil"
+	"github.com/Nexenta/edgefs/src/efscli/efsutil"
 	"github.com/spf13/cobra"
 	"github.com/im-kulikov/sizefmt"
 	"encoding/json"

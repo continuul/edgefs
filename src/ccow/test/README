@@ -1,0 +1,27 @@
+===========================================================
+
+All new features require regressions tests and must :
+1. added to tap_steps.txt to enable the test
+/opt/nedge/scripts/autotest/tests/cf_build_verification/tap_steps.txt
+2. Run at least twice and must clean up after themselves.
+3. Each test must be somewhat short running < 1min
+4. Must test actual buffers and not simply the return code of a function!!
+
+If your test does not meet each of the above, exceptions can be made and
+coverage should be moved elsewhere i.e. testlink for QA or automation within QA
+
+Ex:
+diff --git a/scripts/autotest/tests/cf_build_verification/tap_steps.txt b/scripts/autotest/tests/cf_build_verification/tap_steps.txt
+index 28e7b51..d863035 100644
+--- a/scripts/autotest/tests/cf_build_verification/tap_steps.txt
++++ b/scripts/autotest/tests/cf_build_verification/tap_steps.txt
+@@ -84,3 +84,6 @@ tap_step, /opt/nedge/bin/versions_test -n, versions_test
+ # vmm_test
+ tap_step, /opt/nedge/bin/vmm_test -n -o 16 -t 8 -f, vmm_test -f
+ tap_step, /opt/nedge/bin/vmm_test -n -o 16 -t 8 -r, vmm_test -r
+ +# sharded_list tests
+ +tap_step, /opt/nedge/bin/sharded_list_test -n
+ +tap_step, /opt/nedge/bin/sharded_list_test -n
+ diff --git a/src/neadm/.neadmrc b/src/neadm/.neadmrc
+
+ ==========================================================

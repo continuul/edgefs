@@ -1,0 +1,10 @@
+github:
+  organisations:
+  - name: Nexenta
+    repositories:
+    - name: edgefs-nodejs
+      branch: master
+      useSinglePullRequest: true
+    - name: edgefs-csi
+      branch: master
+      useSinglePullRequest: true

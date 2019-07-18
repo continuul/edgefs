@@ -1,0 +1,18 @@
+global hits
+global miss
+
+
+probe process("/opt/nedge/src/ccow/src/libreptrans/rtrd/.libs/librtrd.so").function("key_cache_lookup").return { 
+    if ($return == 0)
+	    	hits++
+    	else
+    		miss++
+}
+
+probe begin {
+    printf("tracing.....\n");
+}
+
+probe timer.s(1) {
+	printf("hits %d miss %d\n", hits, miss);
+}

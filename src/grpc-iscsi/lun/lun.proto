@@ -1,0 +1,21 @@
+syntax = "proto3";
+
+package lun;
+
+message GenericResponse {
+}
+
+message LunRequest {
+        string service = 1;
+        string cluster = 2;
+        string tenant = 3;
+        string bucket = 4;
+	string object = 5;
+        uint32 lunNumber = 6;
+}
+
+service Lun {
+        rpc AddLun(LunRequest) returns (GenericResponse) {}
+        rpc RemoveLun(LunRequest) returns (GenericResponse) {}
+}
+

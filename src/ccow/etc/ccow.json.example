@@ -1,0 +1,17 @@
+{
+	"tenant" : {
+		"hash_type" : 1,
+		"failure_domain" : 1,
+		"join_delay" : 10000,
+		"unicast_io": 1,
+		"verify_chid" : 1
+	},
+	"network" : {
+		"broker_interfaces" : "eth1;eth2",
+		"broker_port" : 50005,
+		"mc_ttl" : 4,
+		"server_ip6addr" : "::1",
+		"server_port" : 10400,
+		"server_unix_socket" : "/opt/nedge/var/run/sock/ccowd.sock"
+	}
+}

@@ -1,0 +1,9 @@
+tenant/*.pb.go
+service/*.pb.go
+cluster/*.pb.go
+snapshot/*.pb.go
+.get
+.proto
+src/
+bin/
+grpc-efsproxy

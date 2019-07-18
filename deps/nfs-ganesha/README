@@ -1,0 +1,32 @@
+To test NFS ganesha service locally, w/o Docker container etc.
+Useful for on-going development. Step 3 can be changed to use of esfcli and proxy.
+The point is to add one export somehow that we can run tests against.
+
+1. Run "test/daemon_test"
+2. Run "test/cluster_test -s -n" to create default cluster and tenant.
+3. Run "test/basic_fs_bvt -n -c" to create test/fsio_test ready to use NFS bucket
+4. Run ganesha.nfsd
+
+Start needed daemons:
+
+rpcbind -w
+/opt/edgefs/sbin/rpc.statd -p 662
+
+Start Ganesha daemon:
+
+/opt/edgefs/sbin/ganesha.nfsd -L /dev/stdout -F -f ./test-export.conf
+
+"-L /dev/stdout" - redirect logs to /dev/stdout
+"-F" - stay forground
+"-f ./test-export.conf" - use this config
+
+5. Mount exported FS
+
+You should see export listed now:
+
+# showmount -e localhost
+Export list for localhost:
+/test/fsio_test *
+
+mkdir /mnt/test
+mount -t nfs -o vers=3,tcp localhost:/test/fsio_test /mnt/test

@@ -1,0 +1,12 @@
+{
+    "network" : {
+        "server_ip6addr" : "::",
+        "server_port" : 10400,
+        "server_interfaces" : "eth1;eth2",
+        "server_unix_socket" : "/opt/nedge/var/run/sock/ccowd.sock"
+    },
+    "transport": [ "rtlfs" ],
+    "encryption": {
+        "type": "host_aes_256_gcm"
+    }
+}

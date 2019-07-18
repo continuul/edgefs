@@ -1,0 +1,23 @@
+MODULE=kvsfs
+LDFLAGS=-fPIC -shared
+CFLAGS+=-I./include -I$(NEDGE_HOME)/include/backend -O2 -g
+LIBS=-lrt -lpthread
+SRC=$(MODULE)-backend.c
+
+.libs/lib$(MODULE)_backend.so.0.0.0:
+	mkdir -p .libs
+	$(CC) $(CFLAGS) $(LDFLAGS) -Wl,-soname,lib$(MODULE)_backend.so.0 -o .libs/lib$(MODULE)_backend.so.0.0.0 $(SRC) $(LIBS)
+	ln -s lib$(MODULE)_backend.so.0.0.0 .libs/lib$(MODULE)_backend.so.0
+	ln -s lib$(MODULE)_backend.so.0.0.0 .libs/lib$(MODULE)_backend.so
+
+install: .libs/lib$(MODULE)_backend.so.0.0.0
+	cp -f .libs/* $(NEDGE_HOME)/lib/
+
+all: .libs/lib$(MODULE)_backend.so.0.0.0
+clean:
+	rm -rf .libs
+
+
+
+
+

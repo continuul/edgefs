@@ -1,0 +1,100 @@
+[submodule "deps/jemalloc/jemalloc"]
+	path = deps/jemalloc/jemalloc
+	url = https://github.com/Nexenta/jemalloc.git
+	branch = stable-4
+	ignore = all
+[submodule "deps/libqb/libqb"]
+	path = deps/libqb/libqb
+	url = https://github.com/Nexenta/libqb.git
+	branch = v1.0.3-nexenta
+	ignore = all
+[submodule "deps/lmdb/lmdb"]
+	path = deps/lmdb/lmdb
+	url = https://github.com/Nexenta/lmdb.git
+	branch = 0.9.21-nexenta
+	ignore = all
+[submodule "deps/libuv/libuv"]
+	path = deps/libuv/libuv
+	url = https://github.com/Nexenta/libuv.git
+	branch = v0.10.36-nexenta
+	ignore = all
+[submodule "deps/nanomsg/nanomsg"]
+	path = deps/nanomsg/nanomsg
+	url = https://github.com/Nexenta/nanomsg.git
+	branch = 0.8-beta-nexenta
+	ignore = all
+[submodule "deps/corosync/corosync"]
+	path = deps/corosync/corosync
+	url = https://github.com/Nexenta/corosync.git
+	branch = v3.0.1-nexenta
+	ignore = all
+[submodule "deps/liberasurecode/gf-complete"]
+	path = deps/liberasurecode/gf-complete
+	url = https://github.com/Nexenta/gf-complete.git
+	branch = v2-nexenta
+	ignore = all
+[submodule "deps/liberasurecode/isa-l"]
+	path = deps/liberasurecode/isa-l
+	url = https://github.com/Nexenta/isa-l.git
+	branch = v2.14.1-nexenta
+	ignore = all
+[submodule "deps/liberasurecode/jerasure"]
+	path = deps/liberasurecode/jerasure
+	url = https://github.com/Nexenta/jerasure.git
+	branch = v2-nexenta
+	ignore = all
+[submodule "deps/liberasurecode/liberasurecode"]
+	path = deps/liberasurecode/liberasurecode
+	url = https://github.com/Nexenta/liberasurecode.git
+	branch = v1.0.8-nexenta
+	ignore = all
+[submodule "deps/libbacktrace/libbacktrace"]
+	path = deps/libbacktrace/libbacktrace
+	url = https://github.com/Nexenta/libbacktrace.git
+	branch = master-nexenta
+	ignore = all
+[submodule "deps/json-c/json-c"]
+	path = deps/json-c/json-c
+	url = https://github.com/Nexenta/json-c.git
+	branch = json-c-0.12.1-nexenta
+	ignore = all
+[submodule "deps/h2o/h2o"]
+	path = deps/h2o/h2o
+	url = https://github.com/Nexenta/h2o.git
+	branch = v2.3.0-nexenta
+	ignore = all
+[submodule "deps/smartmontools/smartmontools"]
+	path = deps/smartmontools/smartmontools
+	url = https://github.com/Nexenta/smartmontools.git
+	branch = master-nexenta
+	ignore = all
+[submodule "deps/stgt/tgt"]
+	path = deps/stgt/tgt
+	url = https://github.com/Nexenta/tgt.git
+	branch = v1.0.73-nexenta
+	ignore = all
+[submodule "deps/fio/fio"]
+	path = deps/fio/fio
+	url = https://github.com/Nexenta/fio.git
+	branch = fio-2.17-nexenta
+	ignore = all
+[submodule "deps/nfs-ganesha/nfs-ganesha"]
+	path = deps/nfs-ganesha/nfs-ganesha
+	url = https://github.com/Nexenta/nfs-ganesha.git
+	branch = v2.7.4-nexenta
+	ignore = all
+[submodule "deps/nfs-ganesha/nfs-utils"]
+	path = deps/nfs-ganesha/nfs-utils
+	url = https://github.com/Nexenta/nfs-utils.git
+	branch = v2.3.2-nexenta
+	ignore = all
+[submodule "deps/liberasurecode/yasm"]
+	path = deps/liberasurecode/yasm
+	url = https://github.com/Nexenta/yasm.git
+	branch = v1.3.0-nexenta
+	ignore = all
+[submodule "deps/knet/kronosnet"]
+	path = deps/knet/kronosnet
+	url = https://github.com/Nexenta/kronosnet.git
+	branch = v1.8-nexenta
+	ignore = all

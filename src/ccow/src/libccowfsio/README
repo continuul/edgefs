@@ -1,0 +1,92 @@
+FSIO Thread Synchronizatioan
+----------------------------
+
+[A] System level (Per Bucker/Export):
+-------------------------------------
+	[1]	pthread_mutex_t inode_gen_mutex;
+		- The inode nember is generated based on real time.
+		- We allow only one inode number to be generated per micro-second.
+		- Serailizes all threads (NFS: create) which want ot creaate new inode.
+	[2]	pthread_mutex_t rename_mutex;
+		- Allow only one rename at a time.
+		- Even though we lock all the inodes involved in rename OP,
+		  if cannot allow multiple renames in parallel.
+		  This is know to cause loops in directory and hence FS corruption.
+	[3] pthread_rwlock_t hash_table_rwlock;
+		- inode cache RW lock.
+		  All inmemory inodes are maintained in linked list and in hash table.
+		  Hash table based lookup is used when we get the call by inode.
+		  Linked list lookup is used when we want to work on all inodes.
+		- This RW lock safeguards both the linked list and hash table operations.
+	[4]	pthread_mutex_t queue_mutex;
+		- Dirty inodes are presnet in another linked list.
+		- guard the list of dirty inodes.
+
+[B] Inode level:
+----------------
+	Completion management
+		- At a time can have only ONE open completion per inode
+		- Same completion is shared for READ/WRITE and MD updates
+		- Can support MAX_OP_COUNT OPs per completion.
+			At present MAX_OP_COUNT is set to 512. It can be increased upto 8192.
+			[TODO] Make MAX_OP_COUNT as runtime configurable instead of compiletime option.
+		- Only one WRITE thread can use the completion at a time.
+		- Multiple READ threads can operate in parallel.
+		- MD update is done as part of completion finalize.
+		- For READ/WRITE need ONE OP from the completion for every chunk to READ/WRITE.
+		- FOR MD update we don't need any OPs from the completion.
+		- In case the READ/WRITE needs N OPs and
+		  the completion does not have N free/remaining OPs,
+		  then the READ/WRITE blocks for the in flight IO to complete and
+		  new completion to become available.
+		- These requirements add need to perform some completion related book keeping and
+		  management at inode level.
+
+		[1] pthread_mutex_t worker_mutex;
+			- Serializes the access to compltion management data in inode
+			- The condition variables are also controlled using this mutex.
+		[2] pthread_cond_t in_flight_ops_cond;
+			- Condition to confirm that ALL in-flight OPs are done for specific completion.
+			- READ/WRITE threads block at this condition when
+			  there are not enough OPs available with the completion.
+			- Once there are no in flight OPs, the complpetion can be finalized if required.
+		[3] pthread_cond_t available_condition;
+			- In case of clone and snapshot operations, we freez IO to specific file.
+			- This condition blocks any IO while the clone/snapshot OP is in progress.
+			- We don't block the in memory READ/WRITE, only flush to the disk is blocked.
+
+
+	Inode lifecycle management
+		[4] pthread_mutex_t buffer_cache_mutex;
+			- The dirty chunks are maintained as linked list within inode structure
+			- Guards the chunk add/remove to/from the cache list.
+		[5] pthread_rwlock_t chunk_rwlock;
+			- Every chunk in FSIO cache can be locked for READ/WRITE
+			- This guards the chunk from multiple WRITERs and parallel READ and WRITE
+			- This acts as region lock for the file and
+			  allows READ/WRITE to independent chunks in parallel.
+		[6] pthread_rwlock_t rwlock;
+			- Guards the in-memory inode structure,
+			  inode MD attributes and inode states like dirty flag.
+			- sharded dir based data for directory inodes.
+		[7] refcount
+			- Every OP takes on ref count on the inode,
+			  this makes sure thet the inode stays in memory.
+			- The first ref is taken by the inode hash table.
+			- When the last ref goes away, the inode is removed from the cache.
+
+
+[C] Threads:
+------------
+	[1] flusher_thread
+		- Traverses the dirty inode list.
+		- Flushed all inodes which are dirty for more than TIMER_INTERVAL  seconds.
+		  TIMER_INTERVAL is set to 5 seconds at presnent.
+	[2] control_thread
+		- Listens on socket and waits for different control commands:
+			SNAP_CREATE, SNAP_DELETE, SNAP_LIST, SNAP_ROLLBACK, CLONE_FILE,
+			LOG_PERFORMANCE_STATS, SET_LOG_LEVEL
+		- The VVAI specific commands are also received and handled by this thread.
+	[3]	NFS IO and MD OPs
+		- The NFS related IO and MD are processed as part of Ganesha worker threads.
+

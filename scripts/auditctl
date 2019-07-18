@@ -1,0 +1,152 @@
+#!/bin/bash
+
+desc="EdgeFS CCOW Audit Server"
+prog="$NEDGE_HOME/sbin/ccow-auditd"
+LOCK_FILE="$NEDGE_HOME/var/lock/`basename $prog`"
+
+AUDITD_INIT_TIMEOUT=120
+AUDITD_OPTIONS=""
+
+NEDGE_HOME=${NEDGE_HOME:-/opt/nedge}; export NEDGE_HOME
+
+cd $NEDGE_HOME
+source env.sh
+
+success()
+{
+	echo -ne "[  OK  ]\r"
+}
+
+failure()
+{
+	echo -ne "[FAILED]\r"
+}
+
+nspid()
+{
+	PNAME=$1
+	NETNSID=`ps -eo pid,netns,cmd|awk '{if ($1 == 1) print $2}'`
+	PID=`ps -eo pid,netns,cmd | grep $NETNSID | grep -v grep | grep $PNAME | awk '{print $1}'`
+	if [ ${#PID} -gt 0 ]; then
+		echo $PID
+		return 0
+	else
+		return 1
+	fi
+}
+
+status()
+{
+	pid=$(nspid $1 2>/dev/null)
+	res=$?
+	if [ $res -ne 0 ]; then
+		echo "$1 is stopped"
+	else
+		echo "$1 (pid $pid) is running..."
+	fi
+	return $res
+}
+
+# The version of __pids_pidof in /etc/init.d/functions calls pidof with -x
+# This means it matches scripts, including this one.
+# Redefine it here so that status (from the same file) works.
+# Otherwise simultaneous calls to stop() will loop forever
+__pids_pidof() {
+        pidof -c -o $$ -o $PPID -o %PPID "$1" || \
+                pidof -c -o $$ -o $PPID -o %PPID "${1##*/}"
+}
+
+wait_for_ipc()
+{
+	try=0
+	max_try=$((AUDITD_INIT_TIMEOUT*2-1))
+	[ "$max_try" -le "0" ] && max_try=120
+
+	# TODO: implement pooling 
+	return 0
+
+	while [ "$try" -le "$max_try" ]; do
+		if corosync-cfgtool -s > /dev/null 2>&1; then
+			return 0
+		fi
+		sleep 0.5
+		try=$((try + 1))
+	done
+
+	return 1
+}
+
+start()
+{
+	echo -n "Starting $desc ($prog): "
+
+	if status $prog > /dev/null 2>&1; then
+		success
+	else
+		$prog $AUDITD_OPTIONS 2>&1 &
+
+		if [ "$?" != 0 ] || ! wait_for_ipc; then
+			failure
+			rtrn=1
+		else
+			touch $LOCK_FILE
+			success
+		fi
+	fi
+	echo
+}
+
+stop()
+{
+	! status $prog > /dev/null 2>&1 && return
+
+	echo -n "Signaling $desc ($prog) to terminate: "
+	kill -TERM $(pidof $prog) > /dev/null 2>&1
+	success
+	echo
+
+	echo -n "Waiting for $prog services to unload:"
+	while status $prog > /dev/null 2>&1; do
+		sleep 1
+		echo -n "."
+	done
+
+	rm -f $LOCK_FILE
+	success
+	echo
+}
+
+restart()
+{
+	stop
+	start
+}
+
+rtrn=0
+
+case "$1" in
+start)
+	start
+;;
+restart|reload|force-reload)
+	restart
+;;
+condrestart|try-restart)
+	if status $prog > /dev/null 2>&1; then
+		restart
+	fi
+;;
+status)
+	status $prog
+	rtrn=$?
+;;
+stop)
+	stop
+;;
+*)
+	echo "usage: $0 {start|stop|restart|reload|force-reload|condrestart|try-restart|status}"
+	rtrn=2
+;;
+esac
+
+exit $rtrn

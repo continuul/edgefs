@@ -1,0 +1,13 @@
+{
+    "port": 9982,
+    "port_secure": 8443,
+    "chunk_size": 1048576,
+    "cluster_name": "cltest",
+    "tenant_name": "test",
+    "number_of_versions": 1,
+    "debug": false,
+    "no_cleanup": false,
+    "need_md5": false,
+    "region": "us-east-1"
+}
+

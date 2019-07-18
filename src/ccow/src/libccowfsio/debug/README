@@ -1,0 +1,43 @@
+gdb debug commands for fsio
+-----------------------------------------------------
+How-to:
+    Attach gdb to Ganesha process or coredump
+    Source the fsio.gdb file in gdb
+
+
+Available commands:
+1] ganesha_export
+    Print the specific ganesha export
+    usage: ganesha_export <export-id>
+
+2] nedge_export
+    Print the specific Nedge export
+    usage: nedge_export <export-id>
+
+3] profile_stats
+    Print the profiling timing stats for FSIO APIs
+    usage: profile_stats <export-id>
+
+4] list_inodes
+    List all inodes in FSIO cache
+    usage: list_inodes <export-id>
+
+5] find_inode
+    Find specific inode in FSIO cache
+    usage: find_inode <export-id> <inode-number>
+
+
+Examine namespace layout
+-----------------------------------------------------
+1] Root directory listing
+   nelist cltest test test .nexenta_nedge_nfs_root_2
+
+2] List directory by inode number (say - 1156660616849805034)
+   nelist cltest test test 1156660616849805034
+
+3] Check used up server-ids
+   The serverr id is used as part of the inode for uniqueness
+    nelist cltest test test .nexenta_nedge_nfs_inode_master
+
+4] List inodes marked for deletion
+    nelist cltest test test .nexenta_nedge_nfs_inode_to_delete

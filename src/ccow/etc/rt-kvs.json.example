@@ -1,0 +1,33 @@
+{
+    "backend": "kvslmdb",
+    "backend_opts": {
+	"sync": 1
+    },
+    "devices": [
+    {
+        "name": "scsi-35000c500842a615b",
+	"path": "/data/sdb",
+	"journal": "ata-SanDisk_SD6SB2M512G1022I_140751401308"
+    },
+    {
+        "name": "scsi-35000c500842aa0f7",
+	"path": "/data/sdc",
+	"journal": "ata-SanDisk_SD6SB2M512G1022I_140751401308"
+    },
+    {
+        "name": "scsi-35000c500842aa45b",
+	"path": "/data/sdd",
+	"journal": "ata-SanDisk_SD6SB2M512G1022I_140751401308"
+    },
+    {
+        "name": "scsi-350000393a8c9af30",
+	"path": "/data/sde",
+	"journal": "ata-SanDisk_SD6SB2M512G1022I_140751401308"
+    },
+    {
+        "name": "scsi-350000393a8c9b27c",
+	"path": "/data/sdf",
+	"journal": "ata-SanDisk_SD6SB2M512G1022I_140751401308"
+    }
+    ]
+}

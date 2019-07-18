@@ -1,0 +1,6 @@
+status/*.pb.go
+.get
+.proto
+src/
+bin/
+grpc-s3

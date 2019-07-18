@@ -1,0 +1,9 @@
+#!/bin/sh
+
+
+NODE_PATH=$NODE_PATH:./lib
+export NODE_PATH
+LD_LIBRARY_PATH=$NEDGE_HOME/src/ccow/src/libccowd/.libs:$LD_LIBRARY_PATH
+export LD_LIBRARY_PATH
+CHDIR=restapi/reptrans
+cd $NEDGE_HOME/$CHDIR && node ./rt-bg-test.js $@

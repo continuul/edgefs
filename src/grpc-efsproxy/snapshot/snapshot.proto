@@ -1,0 +1,66 @@
+syntax = "proto3";
+
+package snapshot;
+
+message SnapshotInfo {
+	string name = 1;
+	string sourceObject = 2;
+	int64  creationTime = 3;
+}
+
+message ObjectEntry {
+	string Cluster = 1;
+	string Tenant = 2;
+	string Bucket = 3;
+	string Object = 4;
+}
+
+message SnapshotEntry {
+	string Cluster = 1;
+        string Tenant = 2;
+        string Bucket = 3;
+        string Object = 4;
+	string Name = 5;
+}
+
+message SnapviewRequest {
+	ObjectEntry object = 1;
+}
+
+message SnapshotRequest {
+	SnapshotEntry snapshot = 1;
+}
+
+message SnapshotCloneRequest {
+        SnapshotEntry snapshot = 1;
+	ObjectEntry clone = 2;
+}
+message SnapshotListRequest {
+        ObjectEntry object = 1;
+        string pattern = 2;
+        uint32 count = 3;
+}
+
+message SnapshotListResponse {
+    map<string, SnapshotInfo> info = 1;
+}
+
+message SnapshotResponse {
+	SnapshotInfo snapshot = 1;
+}
+
+message CloneResponse {
+	string clone = 1;
+}
+
+message GenericResponse {
+}
+
+
+service Snapshot {
+	rpc CreateSnapshot(SnapshotRequest) returns (SnapshotResponse) {}
+	rpc DeleteSnapshot(SnapshotRequest) returns (GenericResponse) {}
+	rpc CloneSnapshot(SnapshotCloneRequest) returns (CloneResponse) {}
+	rpc ListSnapshots(SnapshotListRequest) returns (SnapshotListResponse) {}
+}
+

@@ -1,0 +1,4 @@
+The EdgeFS Cluster has been installed. Check its status by running:
+  kubectl -n rook-edgefs-{{ .Release.Namespace }} get pods
+
+Visit https://rook.io/docs/rook/master for instructions on how to create and configure Rook EdgeFS clusters

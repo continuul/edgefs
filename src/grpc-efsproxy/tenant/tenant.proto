@@ -1,0 +1,58 @@
+syntax = "proto3"; 
+package tenant;
+
+message GenericResponse {
+}
+
+message BucketCreateRequest {
+	string cluster = 1;
+	string tenant = 2;
+	string bucket = 3;
+	map<string, string> options = 4;
+}
+
+message BucketDeleteRequest {
+	string cluster = 1;
+	string tenant = 2;
+	string bucket = 3;
+}
+
+message BucketListRequest {
+	string cluster = 1;
+	string tenant = 2;
+	string pattern = 3;
+	int32 count = 4;
+}
+
+message BucketInfo {
+	string name = 1;
+}
+
+message BucketListResponse {
+	map<string, BucketInfo> info = 1;
+}
+
+service Bucket {
+	rpc BucketCreate(BucketCreateRequest) returns (GenericResponse) {}
+	rpc BucketDelete(BucketDeleteRequest) returns (GenericResponse) {}
+	rpc BucketList(BucketListRequest) returns (BucketListResponse) {}
+}
+
+message TenantListRequest {
+	string cluster = 1;
+	string pattern = 2;
+	int32 count = 3;
+}
+
+message TenantInfo {
+	string name = 1;
+}
+
+message TenantListResponse {
+	map<string, TenantInfo> info = 1;
+}
+
+service Tenant {
+	rpc TenantList(TenantListRequest) returns (TenantListResponse) {}
+}
+

@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+package status;
+
+message GenericResponse {
+}
+
+message CheckHealthRequest {
+}
+
+message CheckHealthResponse {
+	string status = 1;
+}
+
+service Status {
+	rpc CheckHealth(CheckHealthRequest) returns (CheckHealthResponse) {}
+}
+

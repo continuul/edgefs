@@ -1,0 +1,21 @@
+AC_CONFIG_FILES([
+	src/Makefile
+	src/libccache/Makefile
+	src/libflexhash/Makefile
+	src/libreplicast/Makefile
+	src/libccowutil/Makefile
+	src/libclengine/Makefile
+	src/libccow/Makefile
+	src/libccowd/Makefile
+	src/libauditd/Makefile
+	src/libauditc/Makefile
+	src/libccowfsio/Makefile
+	src/libccowvol/Makefile
+	src/libconnbroker/Makefile
+	src/libtrlog/Makefile
+	src/include/Makefile
+])
+m4_include([src/libchunk/configure.ac.m4])
+m4_include([src/libcrypto/configure.ac.m4])
+m4_include([src/libcompress/configure.ac.m4])
+m4_include([src/libreptrans/configure.ac.m4])

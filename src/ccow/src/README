@@ -1,0 +1,56 @@
+Structure and component organization
+====================================
+
+We organized project in subcomponents, which represent set of statically
+linked libraries under src/. Interdependency between libraries handled
+by automake, so use library_la_LIBADD to define more dependencies and
+build system will take care of changes automatically.
+
+The following libraries defined:
+
+Public:
+=======
+
+src/libccow         User client library which does chunknig. Library
+                    can be linked on remote or directly with an application
+                    on NexentaEdge side, e.g. iSCSI target or KVM QEmu.
+                    This is high performance library low level library.
+
+src/libccowd        Server side library, which is linked either with embedded
+                    daemon, e.g. ethernet drive or EJBOD or with NMF worker.
+                    This is high performance library which does builds actual
+                    CCOW ring and provides SAS/SATA/EDrive/etc storage layering
+
+src/libauditd       Audit service library. Aggregates statistics, links with
+                    external analytics processing tools via pluggable sinks and
+		    exposing publisher/subscriber interface for libccow.
+
+Private:
+========
+
+src/libclengine     Cluster Engine layer. Abstracts out synchronisation and
+                    message ordering library. This is the place where CCOW ring
+                    deals with such events as necessary quorum, server list
+                    syncrhonization and networking partitioning.
+
+src/libreplicast    Core Replicast(tm) protocol implementation
+
+src/libflexhash     Core FlexHash(tm) hash algorithm implementation
+
+src/libreptrans     Replicast Transport layer. Abstracts out SAS/SATA/EDrive/etc
+                    storage devices. Devices highly virtualized. For instance
+                    it presents ZFS POSIX filesystem as a device, at the same
+                    time it can present local high-performance Key-Value store
+                    as device too, e.g. LevelDB, Redis, etc
+
+src/libccowutil         Helper library. Logger, queue/list primitives, string
+                    buffers, json parser, etc
+
+src/libcrypto       Crypto Hash algorightms, generalized via convinient API
+
+src/libcompress     Compression algorightms, generalized via convinient API
+
+src/libbigint       Big Integer ariphmetics, generalized via convinient API
+
+src/libchunk        Provides pluggable object chunking interface to be consumed
+                    by libccow

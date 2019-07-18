@@ -1,0 +1,12 @@
+{
+    "devices": [
+        {
+            "name": "data/store1",
+            "path": "/data/store1"
+        },
+        {
+            "name": "data/store2",
+            "path": "/data/store2"
+        }
+    ]
+}

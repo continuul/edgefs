@@ -1,0 +1,32 @@
+apiVersion: skaffold/v1beta2
+kind: Config
+build:
+  artifacts:
+  - image: changeme
+    context: .
+    docker: {}
+  tagPolicy:
+    envTemplate:
+      template: '{{.DOCKER_REGISTRY}}/nexenta/edgefs:{{.VERSION}}'
+  local: {}
+  cluster:
+    timeout: 2h
+deploy:
+  kubectl: {}
+profiles:
+- name: dev
+  build:
+    artifacts:
+    - docker: {}
+    tagPolicy:
+      envTemplate:
+        template: '{{.DOCKER_REGISTRY}}/nexenta/edgefs:{{.DIGEST_HEX}}'
+    local: {}
+  deploy:
+    helm:
+      releases:
+      - name: edgefs
+        chartPath: charts/edgefs
+        setValueTemplates:
+          image.repository: '{{.DOCKER_REGISTRY}}/nexenta/edgefs'
+          image.tag: '{{.DIGEST_HEX}}'

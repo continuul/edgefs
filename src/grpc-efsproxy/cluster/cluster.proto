@@ -1,0 +1,32 @@
+syntax = "proto3";
+
+package cluster;
+
+message GenericResponse {
+}
+
+message ClusterListRequest {
+	string pattern = 1;
+	int32 count = 2;
+}
+
+message ClusterInfo {
+	string name = 1;
+}
+
+message ClusterListResponse {
+	map<string, ClusterInfo> info = 1;
+}
+
+message CheckHealthRequest {
+}
+
+message CheckHealthResponse {
+	string status = 1;
+}
+
+service Cluster {
+	rpc ClusterList(ClusterListRequest) returns (ClusterListResponse) {}
+	rpc CheckHealth(CheckHealthRequest) returns (CheckHealthResponse) {}
+}
+

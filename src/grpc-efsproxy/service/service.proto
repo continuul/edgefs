@@ -1,0 +1,86 @@
+syntax = "proto3";
+
+package service;
+
+message GenericResponse {
+}
+
+message ServiceListRequest {
+	string pattern = 1;
+	int32 count = 2;
+	ProtocolType type = 3;
+}
+
+message ServiceInfo {
+	string name = 1;
+	
+	//iscsi
+	string iqn = 2;
+	ProtocolType type = 3;
+}
+
+message ServiceListResponse {
+    map<string, ServiceInfo> info = 1;
+}
+
+message ServiceObjectListRequest {
+    string service = 1;
+	string pattern = 2;
+	int32 count = 3;
+}
+
+message ServiceObjectInfo {
+	string name = 1;
+}
+
+message ServiceObjectListResponse {
+    map<string, ServiceObjectInfo> info = 1;
+}
+
+enum ProtocolType {
+	UNKNOWN = 0;
+	NFS = 1;
+	S3 = 2;
+	ISCSI = 3;
+	NBD = 4;
+	ISGW = 5;
+}
+
+message VolumeSettings {
+	bool isClonedObject = 1; // if it is cloned object then do not apply volume properties to it, should be same as parent
+	//volume size in bytes
+	int64 volumeSize = 2;
+	int32 chunkSize = 3;
+	int32 blockSize = 4;
+}
+
+message ServeRequest {
+	ProtocolType type = 1;
+	string service = 2;
+	string k8sService = 3;
+	string k8sNamespace = 4;
+	string cluster = 5;
+	string tenant = 6;
+	string bucket = 7;
+	string object = 8;
+	uint32 volumeId = 9;
+	VolumeSettings volumeSettings = 10;
+}
+
+message ServeResponse {
+        string volumePath = 1;
+}
+
+message SetParamRequest {
+	string service = 1;
+	string tenant = 2;
+}
+
+service Service {
+	rpc Serve(ServeRequest) returns (ServeResponse) {}
+	rpc Unserve(ServeRequest) returns (GenericResponse) {}
+	rpc SetParam(SetParamRequest) returns (GenericResponse) {}
+	rpc ServiceList(ServiceListRequest) returns (ServiceListResponse) {}
+	rpc ServiceObjectList(ServiceObjectListRequest) returns (ServiceObjectListResponse) {}
+}
+

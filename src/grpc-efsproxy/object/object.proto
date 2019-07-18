@@ -1,0 +1,24 @@
+syntax = "proto3"; 
+package object;
+
+message ObjectGetInfoRequest {
+	string cluster = 1;
+	string tenant = 2;
+	string bucket = 3;
+	string object = 4;
+}
+
+message ObjectInfo {
+	uint64 volumeSize = 1;
+	uint32 blockSize = 2;
+	uint32 chunkSize = 3;
+}
+
+message ObjectGetInfoResponse {
+	ObjectInfo info = 1;
+}
+
+service Object {
+	rpc ObjectGetInfo(ObjectGetInfoRequest) returns (ObjectGetInfoResponse) {}
+}
+

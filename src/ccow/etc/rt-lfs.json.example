@@ -1,0 +1,16 @@
+{
+    "devices": [
+        {
+            "name": "store1",
+            "path": "/data/store1",
+            "device": "/dev/sdb",
+            "verify_chid": 1
+        },
+        {
+            "name": "store2",
+            "path": "/data/store2",
+            "device": "/dev/sdc",
+            "verify_chid": 1
+        }
+    ]
+}

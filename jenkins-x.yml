@@ -1,0 +1,28 @@
+buildPack: docker-helm
+pipelineConfig:
+  agent: {}
+  env:
+  - name: GIT_COMMITTER_EMAIL
+    value: edgefs.bot@gmail.com
+  - name: GIT_COMMITTER_NAME
+    value: edgefs-bot
+  - name: GIT_AUTHOR_EMAIL
+    value: edgefs.bot@gmail.com
+  - name: GIT_AUTHOR_NAME
+    value: edgefs-bot
+  pipelines:
+    pullRequest:
+      postBuild:
+        replace: true
+        steps:
+        - sh: jx step post build --image $DOCKER_REGISTRY/nexenta/$APP_NAME:$PREVIEW_VERSION
+          name: post-build
+      promote:
+        replace: true
+        steps:
+        - dir: charts/preview
+          steps:
+          - sh: make preview
+            name: make-preview
+          - sh: jx preview --app $APP_NAME --dir ../..
+            name: jx-preview

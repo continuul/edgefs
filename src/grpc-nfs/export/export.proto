@@ -1,0 +1,33 @@
+syntax = "proto3";
+
+package export;
+
+message GenericResponse {
+}
+
+message ExportRequest {
+	string service = 1;
+	string cluster = 2;
+	string tenant = 3;
+	string bucket = 4;
+	uint32 exportId = 5;
+}
+
+message ExportListRequest {
+	string pattern = 1;
+}
+
+message ExportInfo {
+	string name = 1;
+}
+
+message ExportListResponse {
+	map<string, ExportInfo> info = 1;
+}
+
+service Export {
+	rpc ExportAdd(ExportRequest) returns (GenericResponse) {}
+	rpc ExportRemove(ExportRequest) returns (GenericResponse) {}
+	rpc ExportList(ExportListRequest) returns (ExportListResponse) {}
+}
+

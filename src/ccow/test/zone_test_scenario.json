@@ -1,0 +1,46 @@
+{
+	"scenarios": [
+		{
+			"devices": 240,
+			"servers": 24,
+			"zones": 12,
+			"used_state": 1
+		},
+		{
+			"devices": 90,
+			"servers": 9,
+			"zones": 9,
+			"used_state": 1
+		},
+		{
+			"devices": 72,
+			"servers": 6,
+			"zones": 3,
+			"used_state": 0
+		},
+		{
+			"devices": 24,
+			"servers": 3,
+			"zones": 3,
+			"used_state": 1
+		},
+		{
+			"devices": 192,
+			"servers": 16,
+			"zones": 1,
+			"used_state": 1
+		},
+		{
+			"devices": 192,
+			"servers": 16,
+			"zones": 4,
+			"used_state": 1
+		},
+		{
+			"devices": 192,
+			"servers": 16,
+			"zones": 4,
+			"used_state": 0
+		}
+	]
+}

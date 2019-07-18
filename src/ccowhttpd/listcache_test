@@ -1,0 +1,57 @@
+#!/usr/bin/env node
+
+'use strict';
+
+var prefix = process.env["NEDGE_HOME"];
+var srcPrefix = require('fs').existsSync(prefix + '/src') ? '/src' : '';
+var ccow = require(prefix + srcPrefix + '/nmf/lib/nef/ccow');
+var async = require(prefix + srcPrefix + '/nmf/node_modules/async');
+var nanomsg = require(prefix + srcPrefix + '/nmf/node_modules/nanomsg');
+var msgpack = require(prefix + srcPrefix + '/nmf/node_modules/msgpack');
+
+global.__ = function (msg) { return msg; };
+global.NEFError = function (code) { return code; };
+
+var req = nanomsg.socket('req');
+var addr = 'ipc:///opt/nedge/var/run/listcache.ipc';
+var sendQueueCb = [];
+var sendTask = async.queue(function (task, done) {
+    var payload = Buffer.concat([new Buffer(task.cmd, 'ascii'), new Buffer(task.value, 'utf8')]);
+    req.send(payload);
+    sendQueueCb.unshift(done);
+}, 1);
+
+req.connect(addr);
+req.on('message', function (buf) {
+    var cb = sendQueueCb.shift();
+    cb(buf);
+});
+
+function sendCmd(cmd, value, doneCb) {
+    sendTask.push({ cmd: cmd, value: value }, doneCb);
+}
+
+sendCmd("L", "", function (res) {
+    var arr = msgpack.unpack(res);
+    console.log("list reply", arr);
+    console.log("key1", arr[0].key1);
+    console.log("key2", arr[0].key2);
+});
+
+sendCmd("P", "色は匂へど散りぬるを", function (res) {
+    console.log("put reply", res.length)
+});
+
+sendCmd("P", "test", function (res) {
+    console.log("put reply", res.length)
+});
+
+sendCmd("D", "色は匂へど散りぬるを", function (res) {
+    console.log("del reply", res.length)
+});
+
+sendCmd("L", "", function (res) {
+    console.log("list reply", res.length)
+});
+
+// vi:syntax=javascript

@@ -1,15 +1,15 @@
 # EdgeFS - a multi-cloud scalable distributed storage system
 
 EdgeFS is high-performance and low-latency object storage system released under Apache License v2.0 developed in C/Go.
-It provides Kubernetes integrated Multi-Head Scale-Out NFS (POSIX compliant, Distributed RW access to files), Amazon S3 compatible API, iSCSI or NBD block interfaces, advanced global versioning with file-level granularity unlimited snapshots, global data deduplication and Geo-transparent access to data from on-prem, private/public clouds or small footprint edge (IoT) devices.
+It provides Kubernetes integrated Multi-Head Scale-Out NFS (POSIX compliant, Distributed RW access to files), Amazon S3 compatible API with AI/ML S3X enhancements, iSCSI and NBD block interfaces, advanced global versioning with file-level granularity unlimited snapshots, global data deduplication and geo-transparent access to data from on-prem, private/public clouds or small footprint edge (IoT) devices.
 
 <p align="center">
-  <img src="https://github.com/Nexenta/edge-dev/raw/master/images/edgefs-multicloud.png?raw=true" alt="edgefs-multicloud.png"/>
+  <img src="https://github.com/Nexenta/edge-dev/raw/master/images/edgefs-multicloud.png?raw=true" alt="edgefs-multicloud.png"  width="75%" height="75%"/>
 </p>
 
-EdgeFS is capable of spanning unlimited number of geographically distributed sites (Geo-site), connected with each other as one global name space data fabric running on top of Kubernetes platform, providing persistent, fault-tolerant and high-performance volumes for stateful Kubernetes Applications.
+EdgeFS is capable of spanning unlimited number of geographically distributed sites (Geo-site), connected with each other as one global name space data fabric running on top of Kubernetes platform, providing persistent, fault-tolerant and high-performance fully compatible S3 Object API and [CSI volumes](https://github.com/Nexenta/edgefs-csi) for stateful Kubernetes Applications.
 
-At each Geo-site, EdgeFS nodes deployed as containers (StatefulSet) on physical or virtual Kubernetes nodes, pooling available storage capacity and presenting it via compatible S3/NFS/iSCSI/etc storage emulated protocols for cloud-native applications running on the same or dedicated servers.
+At each Geo-site, EdgeFS segment nodes deployed as containers (Kubernetes StatefulSet or Docker Compose) on physical or virtual nodes, pooling available storage capacity and presenting it via compatible S3/NFS/iSCSI/etc storage emulated protocols for cloud-native applications running on the same or dedicated servers.
 
 ## How it works, in a Nutshell?
 
@@ -44,18 +44,22 @@ Deployments:
 
 * [Docker](https://github.com/Nexenta/edgefs/wiki/Quick-Start---Docker)
 * [Kubernetes RookIO](https://github.com/Nexenta/edgefs/wiki/Quick-Start---Kubernetes-RookIO)
-* [Kubernetes StatefulSet](https://github.com/Nexenta/edgefs/wiki/Quick-Start---Kubernetes-StatefulSet)
-* [Kubernetes Helm](https://github.com/Nexenta/edgefs/wiki/Quick-Start---Kubernetes-Helm)
 
 Configurations:
 
-* [Initialization](https://github.com/Nexenta/edgefs/wiki/Quick-Start---Initialization)
-* [Docker NFS](https://github.com/Nexenta/edgefs/wiki/Quick-Start---Docker-NFS)
-* [Docker ISGW (Multi-Site)](https://github.com/Nexenta/edgefs/wiki/Quick-Start---Docker-ISGW)
-* [Kubernetes NFS](https://github.com/Nexenta/edgefs/wiki/Quick-Start---Kubernetes-NFS)
-* [Kubernetes S3](https://github.com/Nexenta/edgefs/wiki/Quick-Start---Kubernetes-S3)
-* [Kubernetes iSCSI](https://github.com/Nexenta/edgefs/wiki/Quick-Start---Kubernetes-iSCSI)
-* [Kubernetes ISGW (Multi-Site)](https://github.com/Nexenta/edgefs/wiki/Quick-Start---Kubernetes-ISGW)
+* [Initialization](https://github.com/Nexenta/edgefs/wiki/Quick-Start---Initialization) - generic initialization procedure, applicable 
+* [Kubernetes RookIO Deployment](https://rook.io/docs/rook/master/edgefs-cluster-crd.html) - segment deployment procedure
+* [Kubernetes RookIO CSI Integration](https://rook.io/docs/rook/master/edgefs-csi.html) - detailed instructions on how to get CSI configured with EdgeFS RookIO
+* [Kubernetes RookIO Monitoring](https://rook.io/docs/rook/master/edgefs-monitoring.html) - Prometheus and Graphana integrations
+* [Kubernetes RookIO VDEV Management](https://rook.io/docs/rook/master/edgefs-vdev-management.html) - disk/VDEV health checking, replacement, addition, etc
+* [Kubernetes RookIO Upgrade](https://rook.io/docs/rook/master/edgefs-upgrade.html) - detailed instructions on how to execute rolling upgrade
+* [Kubernetes RookIO GUI](https://rook.io/docs/rook/master/edgefs-ui.html) - segment dashboard, CRD wizard
+* [Kubernetes RookIO NFS](https://rook.io/docs/rook/master/edgefs-nfs-crd.html) - setting up Scale-Out NFS (File)
+* [Kubernetes RookIO S3](https://rook.io/docs/rook/master/edgefs-s3-crd.html) - setting up AWS S3 compatible interface (Object)
+* [Kubernetes RookIO S3X AI/ML](https://rook.io/docs/rook/master/edgefs-s3x-crd.html) - setting up S3X interface for AI/ML, NoSQL and other intensive low latency workloads
+* [Kubernetes RookIO iSCSI](https://rook.io/docs/rook/master/edgefs-iscsi-crd.html) - setting up Scale-Out iSCSI (Block)
+* [Kubernetes RookIO ISGW (Global Namespaces)](https://rook.io/docs/rook/master/edgefs-isgw-crd.html) - setting up geo-transparent capable global name space
+* [Kubernetes RookIO OpenStack/SWIFT)](https://rook.io/docs/rook/master/edgefs-swift-crd.html) - setting up OpenStack/SWIFT inteface (Object)
 
 ## Join our growing community!
 
@@ -66,7 +70,7 @@ Configurations:
 
 ### Community Meeting
 
-A regular community meeting takes place every other [Tuesday at 10:00 AM PT (Pacific Time)](https://zoom.us/j/404796463).
+A regular community meeting takes place monthly on every first [Tuesday at 10:00 AM PT (Pacific Time)](https://zoom.us/j/404796463).
 Convert to your [local timezone](http://www.thetimezoneconverter.com/?t=10:00&tz=PT%20%28Pacific%20Time%29).
 
 Any changes to the meeting schedule will be added to the [agenda doc](https://docs.google.com/document/d/1zU_xSN2I-d6EMJF3HSQlfceYuIlPFOJ3jWVYYoAqh8w/edit?usp=sharing) and posted to [Slack #users](https://edgefs.slack.com/messages/CDCUWDZP0) and the [edgefs-users mailing list](https://groups.google.com/forum/#!forum/edgefs).

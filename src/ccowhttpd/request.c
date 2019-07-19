@@ -83,7 +83,14 @@ get_request_type(param_vector *query_params, int method_type, char *bid, int bid
 		if (method_type == METHOD_IS_DELETE) {
 			return S3_BUCKET_DELETE;
 		}
-		if (method_type == METHOD_IS_PUT) {
+		if (method_type == METHOD_IS_PUT &&
+		    !param_has(H2O_STRLIT("acl"), query_params) &&
+		    !param_has(H2O_STRLIT("cores"), query_params) &&
+		    !param_has(H2O_STRLIT("lifecycle"), query_params) &&
+		    !param_has(H2O_STRLIT("encryption"), query_params) &&
+		    !param_has(H2O_STRLIT("policy"), query_params) &&
+		    !param_has(H2O_STRLIT("tagging"), query_params) &&
+		    !param_has(H2O_STRLIT("versioning"), query_params)) {
 			return S3_BUCKET_CREATE;
 		}
 		return S3_UNKNOWN;

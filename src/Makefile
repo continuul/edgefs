@@ -5,7 +5,7 @@
 
 SRCDIR=$(NEDGE_HOME)
 PROJECTS_DIRS_PROXY_DEPS=grpc-iscsi grpc-nfs s3gw grpc-s3x grpc-s3
-PROJECTS_DIRS=efscli ccownbd ccowhttpd grpc-efsproxy
+PROJECTS_DIRS=efscli ccownbd ccowhttpd grpc-efsproxy corosync-pod-watcher
 
 MAKEFLAGS += -j
 
@@ -31,6 +31,7 @@ all: install
 
 .ccow: .ccow-build
 	make -C ccow install
+	touch $(SRCDIR)/.lock
 
 $(PROJECTS_DIRS_PROXY_DEPS):: .ccow
 	$(MAKE) -C $@ $(MAKECMDGOALS)
@@ -68,3 +69,4 @@ clean:
 	-make -C ccow clean
 	for p in $(PROJECTS_DIRS) $(PROJECTS_DIRS_PROXY_DEPS); do make -C $$p clean || exit 1; done
 	rm -f .ccow-configure .ccow-build
+	rm -rf ./pkg ./bin ./src

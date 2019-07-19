@@ -7,7 +7,7 @@ SRCDIR=$(NEDGE_HOME)
 NAME=libbacktrace
 
 .configure:
-	cd ../.. && flock --verbose -e .gitmodules git submodule update --init deps/libbacktrace/$(NAME)
+	cd ../.. && flock -e .gitmodules git submodule update --init deps/libbacktrace/$(NAME)
 	cd $(NAME) && CFLAGS="$(CFLAGS) -g -O2 -fPIC" ./configure --prefix=$(SRCDIR)
 	touch $@
 

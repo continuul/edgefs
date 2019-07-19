@@ -23,8 +23,8 @@ endif
 all: install
 
 .configure:
-	cd ../.. && flock --verbose -e .gitmodules git submodule update --init deps/nfs-ganesha/$(NAME)
-	cd ../.. && flock --verbose -e .gitmodules git submodule update --init deps/nfs-ganesha/$(NFS_UTILS)
+	cd ../.. && flock -e .gitmodules git submodule update --init deps/nfs-ganesha/$(NAME)
+	cd ../.. && flock -e .gitmodules git submodule update --init deps/nfs-ganesha/$(NFS_UTILS)
 	cd $(NAME) && git submodule update --init src/libntirpc
 	mkdir -p build
 	cd build && env JEMALLOC_ROOT_DIR=$(SRCDIR) CFLAGS="$(CFLAGS) $(DEBUG_FLAGS)" \

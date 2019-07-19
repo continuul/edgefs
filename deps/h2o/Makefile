@@ -15,7 +15,7 @@ DEBUG_LDFLAGS=-lasan
 endif
 
 .configure:
-	cd ../.. && flock --verbose -e .gitmodules git submodule update --init deps/h2o/$(NAME)
+	cd ../.. && flock -e .gitmodules git submodule update --init deps/h2o/$(NAME)
 	cd $(NAME) && CFLAGS="$(CFLAGS) $(DEBUG_FLAGS)" LDFLAGS="$(LDFLAGS) $(DEBUG_LDFLAGS)" cmake -DWITH_MRUBY=OFF -DWITH_PICOTLS=ON CMakeLists.txt
 	touch $@
 

@@ -7,7 +7,7 @@ SRCDIR=$(NEDGE_HOME)
 NAME=libqb
 
 .configure:
-	cd ../.. && flock --verbose -e .gitmodules git submodule update --init deps/libqb/$(NAME)
+	cd ../.. && flock -e .gitmodules git submodule update --init deps/libqb/$(NAME)
 	cd $(NAME) && ./autogen.sh
 	cd $(NAME) && ./configure --prefix=$(SRCDIR) \
 		--with-socket-dir=$(SRCDIR)/var/run/corosync \

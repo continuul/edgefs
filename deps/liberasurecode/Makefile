@@ -12,11 +12,11 @@ EC_NAME=liberasurecode
 MAKEFLAGS += -j
 
 .build_dep:
-	cd ../.. && flock --verbose -e .gitmodules git submodule update --init deps/liberasurecode/$(YASM_NAME)
-	cd ../.. && flock --verbose -e .gitmodules git submodule update --init deps/liberasurecode/$(ISAL_NAME)
-	cd ../.. && flock --verbose -e .gitmodules git submodule update --init deps/liberasurecode/$(GF_NAME)
-	cd ../.. && flock --verbose -e .gitmodules git submodule update --init deps/liberasurecode/$(JE_NAME)
-	cd ../.. && flock --verbose -e .gitmodules git submodule update --init deps/liberasurecode/$(EC_NAME)
+	cd ../.. && flock -e .gitmodules git submodule update --init deps/liberasurecode/$(YASM_NAME)
+	cd ../.. && flock -e .gitmodules git submodule update --init deps/liberasurecode/$(ISAL_NAME)
+	cd ../.. && flock -e .gitmodules git submodule update --init deps/liberasurecode/$(GF_NAME)
+	cd ../.. && flock -e .gitmodules git submodule update --init deps/liberasurecode/$(JE_NAME)
+	cd ../.. && flock -e .gitmodules git submodule update --init deps/liberasurecode/$(EC_NAME)
 	cd $(YASM_NAME) && ./autogen.sh
 	cd $(YASM_NAME) && ./configure --prefix=$(SRCDIR)
 	make -j1 install -C $(YASM_NAME)

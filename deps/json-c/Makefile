@@ -7,7 +7,7 @@ SRCDIR=$(NEDGE_HOME)
 NAME=json-c
 
 .configure:
-	cd ../.. && flock --verbose -e .gitmodules git submodule update --init deps/json-c/$(NAME)
+	cd ../.. && flock -e .gitmodules git submodule update --init deps/json-c/$(NAME)
 	cd $(NAME) && ./autogen.sh
 	cd $(NAME) && autoreconf --force --install
 	cd $(NAME) && CFLAGS="$(CFLAGS) -g -O2" ./configure --prefix=$(SRCDIR)

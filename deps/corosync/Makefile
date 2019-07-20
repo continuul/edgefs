@@ -7,7 +7,7 @@ SRCDIR=$(NEDGE_HOME)
 NAME=corosync
 
 .configure:
-	cd ../.. && flock --verbose -e .gitmodules git submodule update --init deps/corosync/$(NAME)
+	cd ../.. && flock -e .gitmodules git submodule update --init deps/corosync/$(NAME)
 	cd $(NAME) && ./autogen.sh
 	cd $(NAME) && LIBQB_CFLAGS="-I$(SRCDIR)/include -DQB_KILL_ATTRIBUTE_SECTION" LIBQB_LIBS="-L$(SRCDIR)/lib -l:libqb.so.0" knet_CFLAGS="-I$(SRCDIR)/include" knet_LIBS="-L$(SRCDIR)/lib -lknet" ./configure --prefix=$(SRCDIR)
 	touch $@

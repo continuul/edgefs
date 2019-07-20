@@ -21,7 +21,7 @@ endif
 endif
 
 .configure:
-	cd ../.. && flock --verbose -e .gitmodules git submodule update --init deps/stgt/$(NAME)
+	cd ../.. && flock -e .gitmodules git submodule update --init deps/stgt/$(NAME)
 	touch $@
 
 .build: .configure

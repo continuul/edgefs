@@ -38,7 +38,7 @@ import (
 )
 
 func IsSystemName(cl string) bool {
-	if cl == "root" || strings.Compare("^TRLOG-", cl) >= 0 {
+	if cl == "root" || strings.HasPrefix(cl, "TRLOG-") {
 		return true
 	}
 	return false

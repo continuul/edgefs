@@ -7,7 +7,7 @@ SRCDIR=$(NEDGE_HOME)
 NAME=nanomsg
 
 .configure:
-	cd ../.. && flock -e .gitmodules git submodule update --init deps/nanomsg/$(NAME)
+	cd ../.. && flock -e .gitmodules git submodule update --depth 1 --recursive --init deps/nanomsg/$(NAME)
 	cd $(NAME) && ./autogen.sh
 	cd $(NAME) && CFLAGS="$(CFLAGS) -g -O0" ./configure --prefix=$(SRCDIR)
 	touch $@

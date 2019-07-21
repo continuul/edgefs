@@ -21,7 +21,7 @@ endif
 endif
 
 .configure:
-	cd ../.. && flock -e .gitmodules git submodule update --init deps/fio/$(NAME)
+	cd ../.. && flock -e .gitmodules git submodule update --depth 1 --recursive --init deps/fio/$(NAME)
 	cd $(NAME) && ./configure --prefix=$(SRCDIR)
 	touch $@
 

@@ -7,7 +7,7 @@ SRCDIR=$(NEDGE_HOME)
 NAME=smartmontools
 
 .configure:
-	cd ../.. && flock -e .gitmodules git submodule update --init deps/smartmontools/$(NAME)
+	cd ../.. && flock -e .gitmodules git submodule update --depth 1 --recursive --init deps/smartmontools/$(NAME)
 	cd $(NAME)/smartmontools && ./autogen.sh && ./configure --prefix=$(SRCDIR) --with-nvme-devicescan
 	touch $@
 

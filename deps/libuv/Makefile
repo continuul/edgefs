@@ -7,7 +7,7 @@ SRCDIR=$(NEDGE_HOME)
 NAME=libuv
 
 .configure:
-	cd ../.. && flock -e .gitmodules git submodule update --init deps/libuv/$(NAME)
+	cd ../.. && flock -e .gitmodules git submodule update --depth 1 --recursive --init deps/libuv/$(NAME)
 	cd $(NAME) && CFLAGS="-O3 -funroll-loops -ggdb3" make
 	touch $@
 

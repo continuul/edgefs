@@ -13,7 +13,7 @@ JEMALLOC=no
 endif
 
 .build:
-	cd ../.. && flock -e .gitmodules git submodule update --init deps/lmdb/$(NAME)
+	cd ../.. && flock -e .gitmodules git submodule update --depth 1 --recursive --init deps/lmdb/$(NAME)
 	XCFLAGS="$(XCFLAGS) $(DFLAGS) -DMDB_USE_ROBUST -DMDB_USE_PWRITEV=1 -DMDB_FDATASYNC_WORKS=1 -DMADV_RANDOM=1" USE_JEMALLOC=$(JEMALLOC) \
 		 make -C $(NAME)/libraries/liblmdb prefix=$(SRCDIR)
 	touch $@

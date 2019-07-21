@@ -20,6 +20,7 @@ endef
 
 define install_dev_env
 @if test $(distributorid) = ubuntu; then \
+	add-apt-repository -y ppa:git-core/ppa; \
 	apt-get update; \
 	apt-get -y install git curl; \
 fi
@@ -109,7 +110,7 @@ clean:
 	$(call verify_minimal_env)
 	make -C src clean
 	make -C deps clean
-	rm -f .deploy .deploy-dev .ccow-test .ccow-tools .deps .edgefs .scripts
+	rm -f .deploy .deploy-dev .ccow-test .ccow-tools .deps .edgefs .scripts .lock
 	@echo
 	@echo ==============================================
 	@echo " EdgeFS is ready to run 'make install' again "

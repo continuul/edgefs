@@ -27,7 +27,7 @@ NAME=jemalloc
 # export JE_MALLOC_CONF=prof:true,prof_prefix:jeprof.out,prof_leak:true,prof_gdump:true
 #
 .configure:
-	cd ../.. && flock -e .gitmodules git submodule update --init deps/jemalloc/$(NAME)
+	cd ../.. && flock -e .gitmodules git submodule update --depth 1 --recursive --init deps/jemalloc/$(NAME)
 	cd $(NAME) && ./autogen.sh
 	cd $(NAME) && EXTRA_CFLAGS="-std=gnu99 -g -O3" CPPFLAGS=-O3 \
 		./configure --prefix=$(SRCDIR) \

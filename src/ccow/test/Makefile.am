@@ -42,7 +42,7 @@ bin_PROGRAMS = daemon_test client_test libcrypto_test \
         locks_api_test locks_rt_test key_cache_test \
         basic_fs_multifile_test basic_fs_ops_test basic_fs_rw_test basic_fs_parallel_rd_test \
         basic_fs_inodefetch_test basic_fs_bvt basic_fs_sharded_dir \
-        rd_bloom_test simple_simple get_kv msort_test btreenam_iter_test modbit_test \
+        rd_bloom_test simple_simple get_kv msort_test btreenam_iter_test \
         pseudo_delete simple_wait sharded_list_test user_list_test \
         gwlru_api_test  acl_list_test ec_unencode_test bucket_list_objects \
         ccowtp_test reptrans_pattern_test fs_verify_dentry ccow_isgw_test \

@@ -1843,6 +1843,17 @@ _retry_open:
 		goto _exit;
 	}
 
+	if (!(rt_flags & RT_FLAG_RDONLY) && (rd->metaloc.version == 0)) {
+		err = rd_format_lmdb_part(dbpath);
+		if (err) {
+			log_error(lg, "Dev(%s): cannot open, dbpath=%s "
+				, dev->name, dbpath);
+			err = -EIO;
+			goto _exit;
+		}
+		log_notice(lg, "Dev(%s) cleaned mdcache partition %s", dev->name, dbpath);
+	}
+
 	err = mdb_env_open(rd->mdcache_env, dbpath, env_opt, 0664);
 	if (err) {
 		if ((err == ENOENT || err == EINVAL) && retry_cnt++ < 10) {
@@ -10593,7 +10604,7 @@ rd_dev_open_envs(struct repdev* dev) {
 			goto _exit;
 	}
 	if (is_new && dev->journal) {
-		/* An HDD is replaced/new, rebuild mdcache, drop mdoffload */
+		/* A HDD is replaced/new, rebuild mdcache, drop mdoffload */
 		err = rd_rebuild_mdcache(dev);
 		if (err) {
 			log_error(lg, "Dev(%s) mdcache creation error: %d", dev->name,
@@ -10602,7 +10613,7 @@ rd_dev_open_envs(struct repdev* dev) {
 		} else {
 			err = rd_mdoffload_drop(dev);
 			if (!err)
-				log_notice(lg, "Dev(%s) mdcache for part"
+				log_notice(lg, "Dev(%s) mdcache "
 					"has been re-created", dev->name);
 			else
 				goto _exit;

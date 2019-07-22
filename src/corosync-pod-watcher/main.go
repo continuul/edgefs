@@ -84,7 +84,7 @@ func CorosyncRun() {
 	valid := regexp.MustCompile(targetTpl)
 	pmap := make(map[string]*corosyncNode)
 
-	for loopCnt, cfgChanged := 0, 0; true; loopCnt++ {
+	for loopCnt, cfgChanged := 1, 0; true; loopCnt++ {
 		// Fetch all pods from the edgefs' namespace
 		pods, err := clientset.CoreV1().Pods(namespace).List(metav1.ListOptions{})
 		if err != nil {

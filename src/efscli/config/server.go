@@ -34,6 +34,7 @@ import (
 
 const (
 	defaultSlaveServerPort int = 10700
+	defaultSlaveServerDevMax int = 100
 )
 
 func ConfigServerFnc(cmd *cobra.Command, args []string) {
@@ -108,9 +109,9 @@ func ConfigServerFnc(cmd *cobra.Command, args []string) {
 		ccowConf.Network.ServerIP4addr = serverIP
 		ccowdConf.Network.ServerIP4addr = serverIP
 
-		if di > 0 {
-			ccowConf.Network.ServerPort = defaultSlaveServerPort + di
-			ccowdConf.Network.ServerPort = defaultSlaveServerPort + di
+		if di > 0 && ccowdConf.Network.ServerPort == 0 {
+			ccowConf.Network.ServerPort = defaultSlaveServerPort + di + (di-1)*defaultSlaveServerDevMax
+			ccowdConf.Network.ServerPort = defaultSlaveServerPort + di + (di-1)*defaultSlaveServerDevMax
 		}
 
 		err = efsutil.MarshalToFile(nedgeHome+CCOWJsonFile, &ccowConf)

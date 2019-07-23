@@ -6,6 +6,7 @@
 SRCDIR=$(NEDGE_HOME)
 PROJECTS_DIRS_PROXY_DEPS=grpc-iscsi grpc-nfs s3gw grpc-s3x grpc-s3
 PROJECTS_DIRS=efscli ccownbd ccowhttpd grpc-efsproxy corosync-pod-watcher
+GOPATH=`pwd`
 
 MAKEFLAGS += -j
 
@@ -34,10 +35,10 @@ all: install
 	touch $(SRCDIR)/.lock
 
 $(PROJECTS_DIRS_PROXY_DEPS):: .ccow
-	$(MAKE) -C $@ $(MAKECMDGOALS)
+	GOPATH=$(GOPATH) $(MAKE) -C $@ $(MAKECMDGOALS)
 
 $(PROJECTS_DIRS):: .ccow $(PROJECTS_DIRS_PROXY_DEPS)
-	$(MAKE) -C $@ $(MAKECMDGOALS)
+	GOPATH=$(GOPATH) $(MAKE) -C $@ $(MAKECMDGOALS)
 
 # note that .grpc-PROTOCOL needs to be first in this order
 # as .grpc-efsproxy needs .proto interfaces from it

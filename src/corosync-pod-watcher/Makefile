@@ -16,15 +16,16 @@ endif
 
 TARGET := corosync-pod-watcher
 SRCS := main.go $(wildcard */*.go)
+GOPATH?=$(SRCDIR)/src
 
 .PHONY: all clean
 
 .get:
-	GOPATH=$(SRCDIR)/src flock -e $(SRCDIR)/.lock go mod download || true
+	GOPATH=$(GOPATH) flock -e $(SRCDIR)/.lock go mod download || true
 	touch $@
 
 $(TARGET): $(SRCS) .get
-	GOPATH=$(SRCDIR)/src  CGO_LDFLAGS="-L$(SRCDIR)/lib $(DEBUG_LDFLAGS) -lccow -lccowutil -lauditd -lccowfsio -lnanomsg" \
+	GOPATH=$(GOPATH)  CGO_LDFLAGS="-L$(SRCDIR)/lib $(DEBUG_LDFLAGS) -lccow -lccowutil -lauditd -lccowfsio -lnanomsg" \
 		CGO_CFLAGS="$(DEBUG_FLAGS) -I$(SRCDIR)/include/ccow -I$(SRCDIR)/include" \
 		go build -o $(TARGET) main.go
 

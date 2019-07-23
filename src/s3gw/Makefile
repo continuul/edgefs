@@ -14,10 +14,12 @@ endif
 
 endif
 
+GOPATH?=$(SRCDIR)/src
+
 all: s3gw
 
 s3gw: *.go */*.go
-	GOPATH=`pwd` CGO_LDFLAGS="-L$(SRCDIR)/lib $(DEBUG_LDFLAGS) -lccow -lccowutil -lnanomsg" \
+	GOPATH=$(GOPATH) CGO_LDFLAGS="-L$(SRCDIR)/lib $(DEBUG_LDFLAGS) -lccow -lccowutil -lnanomsg" \
 		CGO_CFLAGS="$(DEBUG_FLAGS) -I$(SRCDIR)/include/ccow -I$(SRCDIR)/include" \
 		go build -o s3gw main.go
 

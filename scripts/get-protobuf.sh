@@ -20,8 +20,8 @@ curl -OL https://github.com/${PROTOC_REPO}/releases/download/v${_VERSION}/protoc
 unzip protoc-${_VERSION}-linux-x86_64.zip -d protoc3
 
 # Move protoc to /usr/local/bin/
-mkdir -p ./bin
-mv protoc3/bin/* ${NEDGE_HOME}/src/bin/
+mkdir -p /tmp/protoc/bin
+mv protoc3/bin/* /tmp/protoc/bin/
 rm -rf protoc3 protoc-*.zip
 
 # Move protoc3/include to /usr/local/include/

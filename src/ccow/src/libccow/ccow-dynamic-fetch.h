@@ -10,10 +10,23 @@
 
 #define ISGW_PROTO_VERSION 1
 
+enum eIsgwDynamicFetchType {
+	/*
+	 * The service can handle only MDonly objects
+	 */
+	eIsgwFTypeMDOnly = 0,
+	/*
+	 * The service can handle both MDonly objects
+	 * and an emergency chunk lookup
+	 */
+	eIsgwFTypeFull = 1
+};
+
 struct iswg_addr_item {
 	QUEUE item;
 	char  addr[64]; // IP of an ISGW server
 	uint64_t seg_uid;  // Segment UID
+	enum eIsgwDynamicFetchType mode; /* Dynamic fetch mode: MDonly or MDonly + emergency lookup */
 };
 
 typedef void (*ccow_isgw_proto_cb_t) (void *data, int status, void *rsp);

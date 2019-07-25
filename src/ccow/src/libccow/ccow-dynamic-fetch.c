@@ -281,6 +281,7 @@ build_isgw_service_table(ccow_t cl, struct isgw_service_entry** ptable) {
 		int MD_only_iswg = 0;
 		char* addr_str = NULL;
 		uint64_t suid = 0;
+		int dfetch_mode = eIsgwFTypeMDOnly;
 		while ((bkv = ccow_lookup_iter(biter, CCOW_MDTYPE_CUSTOM, bpos++))) {
 			char *id = (char *)bkv->key;
 			uint16_t id_size = bkv->key_size;
@@ -294,6 +295,8 @@ build_isgw_service_table(ccow_t cl, struct isgw_service_entry** ptable) {
 				MD_only_iswg++;
 			} else if (!strcmp(id, "X-ISGW-Remote-SegID") && strcmp(value, "-"))
 				suid = strtoull(value, NULL, 16);
+			else if (!strcmp(id, "X-ISGW-Emergency-Lookup") && strcmp(value, "-"))
+				dfetch_mode = eIsgwFTypeFull;
 		}
 		if (MD_only_iswg < 2 || !addr_str) {
 			ccow_lookup_release(biter);
@@ -330,6 +333,7 @@ build_isgw_service_table(ccow_t cl, struct isgw_service_entry** ptable) {
 				QUEUE_INIT(&ie->item);
 				strncpy(ie->addr, addr_str, sizeof(ie->addr));
 				ie->seg_uid = suid;
+				ie->mode = dfetch_mode;
 				QUEUE_INSERT_TAIL(&pe->isgw_addr_queue, &ie->item);
 				HASH_ADD_KEYPTR(hh,table,pe->bucketID,strlen(pe->bucketID),pe);
 			} else {
@@ -343,6 +347,7 @@ build_isgw_service_table(ccow_t cl, struct isgw_service_entry** ptable) {
 				QUEUE_INIT(&ie->item);
 				strncpy(ie->addr, addr_str, sizeof(ie->addr));
 				ie->seg_uid = suid;
+				ie->mode = dfetch_mode;
 				QUEUE_INSERT_TAIL(&pe->isgw_addr_queue, &ie->item);
 			}
 		}

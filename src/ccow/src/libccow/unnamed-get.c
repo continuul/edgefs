@@ -698,7 +698,7 @@ unnamedget__init(struct state *st)
 			return;
 		}
 	}
-	if (op->isgw_dfetch) {
+	if (op->isgw_dfetch && RT_ONDEMAND_GET(op->metadata.inline_data_flags) != ondemandPolicyLocal) {
 		io->attributes |= RD_ATTR_ISGW_ONDEMAND;
 		if (op->comp && (op->comp->cont_flags & CCOW_CONT_F_PREFETCH_TOUCH))
 			io->attributes |= RD_ATTR_ONDEMAND_PREFETCH;
@@ -915,6 +915,9 @@ unnamedget_dynfetch_request(struct state *st) {
 	uint512_dump(&r->chid, mchidstr, UINT512_BYTES*2+1);
 
 	if (!strlen(op->isgw_addr_last)) {
+		uint16_t mdonly_policy = ondemandPolicyLocal;
+		if (op)
+			mdonly_policy = RT_ONDEMAND_GET(op->metadata.inline_data_flags);
 		/*
 		 * The ISGW for dynamic fetch isn't chosen or failed.
 		 * Trying to find another
@@ -934,7 +937,9 @@ unnamedget_dynfetch_request(struct state *st) {
 				QUEUE *q;
 				QUEUE_FOREACH(q, &op->isgw_srv_list) {
 					struct iswg_addr_item* e = QUEUE_DATA(q, struct iswg_addr_item, item);
-					if (e->seg_uid == op->metadata.uvid_src_guid.l) {
+					/* Make sure the ISGW is able to serve the object */
+					int match = (mdonly_policy != ondemandPolicyLocal) || (e->mode == eIsgwFTypeFull);
+					if (match && e->seg_uid == op->metadata.uvid_src_guid.l) {
 						/*
 						 * Always start from default ISGW
 						 */
@@ -969,8 +974,13 @@ unnamedget_dynfetch_request(struct state *st) {
 			int offline = 0;
 			(void)ccow_isgw_is_offline(e->addr, &offline);
 			if (!offline) {
-				if (!(op->isgw_flags & CCOWOP_DEFAULT_ISGW_FOUND) ||
-					strcmp(e->addr, op->isgw_addr_default)) {
+				/*
+				 * Only ISGW with X-ISGW-Emergency-Lookup can server
+				 * objects whose origin is this site.
+				 */
+				int match = (mdonly_policy != ondemandPolicyLocal) || (e->mode == eIsgwFTypeFull);
+				if (match && (!(op->isgw_flags & CCOWOP_DEFAULT_ISGW_FOUND) ||
+					strcmp(e->addr, op->isgw_addr_default))) {
 					strcpy(op->isgw_addr_last, e->addr);
 					found = 1;
 				}
@@ -1135,7 +1145,7 @@ unnamedget_error_rcvd(struct state *st)
 		}
 
 		if (r->reply_count == 0 && !c->ec_enabled) {
-			if (op->isgw_dfetch && (io->attributes & RD_ATTR_ISGW_ONDEMAND)) {
+			if (op->isgw_dfetch) {
 				/* Sending a dynamic fetch request */
 				unnamedget_dynfetch_request(st);
 			} else if (r->fddelta >= 0) {

@@ -29,13 +29,16 @@
 #include <json-c/json.h>
 #include <jemalloc/jemalloc.h>
 
+#include "ccow.h"
 #include "ccowutil.h"
+#include "msgpackalt.h"
 #include "user.h"
 #include "acl.h"
 #include "json_path.h"
 
 
 #define MAX_KEY_LEN 4096
+#define VALUE_BUFFER_SIZE 65536
 
 int
 auth_init() {
@@ -52,9 +55,8 @@ auth_destroy() {
 }
 
 int
-get_user_by_authkey(char *cluster, char *tenant, char *authkey, User **user)
+get_user_by_authkey(ccow_t tc, char *cluster, char *tenant, char *authkey, User **user)
 {
-#if 0
 	char buf[MAX_KEY_LEN];
 	char hash[MAX_KEY_LEN];
 	if (build_auth_key(cluster, tenant, (char *) authkey, hash, MAX_KEY_LEN) == NULL) {
@@ -68,44 +70,50 @@ get_user_by_authkey(char *cluster, char *tenant, char *authkey, User **user)
 	}
 
 	User utmp;
-	char *result = NULL;
 	struct json_object *jresult = NULL, *jobj, *obj, *tmp;
 
-	// FIXME: Call worker
+	char key[128];
+	sprintf(key, "key-%s", authkey);
 
-	if (res == 0) {
-		log_trace(lg,"from worker: %s", result);
-		if (result == NULL) {
-			return EINVAL;
-		}
-		res = user_init(&utmp, cluster, tenant, result);
-		if (res != 0)
-			return res;
-		res = user_put_ht(&utmp);
-		if (res != 0)
-			return res;
-		res = user_get_by_hash(hash, user);
-	} else {
-		if (err != NULL) {
-			log_trace(lg, "Error code: %s\n", (err->code != NULL ? err->code : ""));
-			if (err->code != NULL) {
-				if (strcmp(err->code, "ENOENT") == 0) {
-					res = ENOENT;
-				}
-			}
-			je_free(err);
-		}
+	struct iovec iov[1];
+	int	err = ccow_user_get(tc, key,  strlen(key) + 1, iov);
+	if (err) {
+		log_trace(lg,"get_user_by_authkey key: %s error: %d", key, err);
+		return err;
 	}
+
+	char result[VALUE_BUFFER_SIZE] = "";
+	uint8_t ver=0;
+	msgpack_u *u = msgpack_unpack_init(iov->iov_base, iov->iov_len, 0);
+	err = msgpack_unpack_uint8(u, &ver);
+	if (err || ver != 2) {
+		msgpack_unpack_free(u);
+		return EINVAL;
+	}
+	err = msgpack_unpack_str(u, result, VALUE_BUFFER_SIZE - 1);
+	msgpack_unpack_free(u);
+	if (err) {
+		return EINVAL;
+	}
+
+	log_trace(lg,"User from cluster: %s", result);
+	if (result[0] == 0) {
+		return EINVAL;
+	}
+	res = user_init(&utmp, cluster, tenant, result);
+	if (res != 0)
+		return res;
+	res = user_put_ht(&utmp);
+	if (res != 0)
+		return res;
+	res = user_get_by_hash(hash, user);
+
 	return res;
-#else
-	return EINVAL;
-#endif
 }
 
 static int
-get_acl(char *cluster, char *tenant, char *bucket, char *oid, ACL **acl)
+get_acl(ccow_t tc, char *cluster, char *tenant, char *bucket, char *oid, ACL **acl)
 {
-#if 0
 	char buf[MAX_KEY_LEN];
 	char aclkey[MAX_KEY_LEN];
 
@@ -121,45 +129,54 @@ get_acl(char *cluster, char *tenant, char *bucket, char *oid, ACL **acl)
 	}
 
 	ACL atmp;
-	char *result = NULL;
-	nef_worker_handle_t service_hdl;
-	nef_call_error_t *err;
 	struct json_object *jresult = NULL, *jobj, *obj, *tmp;
 
-	// FIXME: Call worker
-
-	if (res == 0) {
-		log_trace(lg,"from worker: %s", result);
-		if (result == NULL) {
-			return -EINVAL;
-		}
-		res = acl_init(&atmp, cluster, tenant, bucket, oid, result);
-		if (res != 0)
-			return res;
-		res = acl_put_ht(&atmp);
-		if (res != 0)
-			return res;
-		res = acl_get_by_aclkey(aclkey, acl);
-	} else {
-		if (err != NULL) {
-			log_trace(lg, "Error code: %s\n", (err->code != NULL ? err->code : ""));
-			if (err->code != NULL) {
-				if (strcmp(err->code, "ENOENT") == 0) {
-					res = -ENOENT;
-				}
-			}
-			je_free(err);
-		}
+	struct iovec iov[1];
+	int	err = ccow_acl_get(tc, bucket, strlen(bucket) + 1, oid,
+             strlen(oid) + 1, 0, iov);
+	if (err) {
+		log_trace(lg,"get_acl for %s/%s error: %d", bucket, oid, err);
+		return err;
 	}
+
+	char result[VALUE_BUFFER_SIZE] = "";
+	uint8_t ver=0;
+	msgpack_u *u = msgpack_unpack_init(iov->iov_base, iov->iov_len, 0);
+	err = msgpack_unpack_uint8(u, &ver);
+	if (err || ver != 2) {
+		msgpack_unpack_free(u);
+		return EINVAL;
+	}
+	err = msgpack_unpack_str(u, result, VALUE_BUFFER_SIZE - 1);
+	msgpack_unpack_free(u);
+	if (err) {
+		return EINVAL;
+	}
+
+	if (result[0] == 0) {
+		return EINVAL;
+	}
+
+	log_trace(lg,"ACL from cluster: %s", result);
+	if (result == NULL) {
+		return -EINVAL;
+	}
+	res = acl_init(&atmp, cluster, tenant, bucket, oid, result);
+	if (res != 0) {
+	    log_trace(lg,"get_acl parse for bucket %s error: %d", bucket, res);
+		return res;
+	}
+	res = acl_put_ht(&atmp);
+	if (res != 0)
+		return res;
+	res = acl_get_by_aclkey(aclkey, acl);
 	return res;
-#else
-	return EINVAL;
-#endif
 }
 
 int
-get_access(char *cluster, char *tenant, char *bucket, char *oid, char *operation, User *user, ACL **acl) {
-	int err = get_acl(cluster, tenant, bucket, oid, acl);
+get_access(ccow_t tc, char *cluster, char *tenant, char *bucket, char *oid, char *operation, User *user, ACL **acl) {
+	// Support only bucket level ACLs!
+	int err = get_acl(tc, cluster, tenant, bucket, "", acl);
 
 	if (err && err != -ENOENT) {
 		log_trace(lg,"get_acl error: %d", err);

@@ -38,6 +38,7 @@ test_auth()
 	User *user;
 	int err;
 
+	/*
 	err = get_user_by_authkey("cltest", "test", "xxx", &user);
 	assert(err != 0);
 	printf("\nWrong user err: %d\n", err);
@@ -75,7 +76,7 @@ test_auth()
 		printf("\nACL: %s\n", acl_to_string(acl));
 		printf("\nACL.owner: %s\n", acl_property_string(acl, "owner", NULL));
 	}
-
+	*/
 	printf("\n\n");
 }
 

@@ -62,6 +62,8 @@ char *param_key_str(param *p, char *buf, unsigned max);
 
 char *param_value_str(param *p, char *buf, unsigned max);
 
+int param_key_equal(param *p, char *key, int key_size);
+
 int param_value_equal(param *p, char *val, int val_size);
 
 int param_add_param(param *p, param_vector *params);
@@ -89,7 +91,10 @@ uint64_t param_find_uint64(char *key, int key_size, uint64_t def, param_vector *
 
 int param_has(char *key, int key_size, param_vector *params);
 
-void param_sort(param_vector *params);
+char **param_sort(param_vector *params);
+
+void param_sort_free(char **keys, param_vector *params);
+
 
 void param_dump(char *header, param_vector *params);
 

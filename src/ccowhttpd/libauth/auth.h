@@ -33,6 +33,7 @@ extern "C" {
 #include <string.h>
 #include <json-c/json.h>
 
+#include "ccow.h"
 #include "user.h"
 #include "acl.h"
 
@@ -40,9 +41,9 @@ extern "C" {
 int auth_init();
 void auth_destroy();
 
-int get_user_by_authkey(char *cluster, char *tenant, char *authkey, User **user);
+int get_user_by_authkey(ccow_t tc, char *cluster, char *tenant, char *authkey, User **user);
 
-int get_access(char *cluster, char *tenant, char *bucket, char *oid, char *operation, User *user, ACL **acl);
+int get_access(ccow_t tc, char *cluster, char *tenant, char *bucket, char *oid, char *operation, User *user, ACL **acl);
 
 #ifdef __cplusplus
 }

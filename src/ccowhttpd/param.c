@@ -116,6 +116,21 @@ param_value_str(param *p, char *buf, unsigned max) {
 	return buf;
 }
 
+int
+param_key_equal(param *p, char *key, int key_size) {
+	if (!p)
+		return 0;
+	if (p->key.base == NULL) {
+		return (key == NULL);
+	}
+	if ((int)p->key.len != key_size) {
+		return 0;
+	}
+	if (strncmp(p->key.base, key, key_size) == 0) {
+		return 1;
+	}
+	return 0;
+}
 
 int
 param_value_equal(param *p, char *val, int val_size) {
@@ -331,19 +346,43 @@ param_dump(char *header, param_vector *params) {
 	}
 }
 
-static int compare_params(const void * a, const void * b) {
-   param *qa = (param *)a;
-   param *qb = (param *)b;
-   return strcmp(qa->key.base, qb->key.base);
+static int compare_keys(const void * a, const void * b) {
+   const char *qa = *(const char **)a;
+   const char *qb = *(const char **)b;
+   return strcmp(qa, qb);
 }
 
+
+char **
+param_sort(param_vector *params) {
+	if (params->size == 0)
+		return NULL;
+
+	char **keys = je_calloc((size_t) params->size, sizeof(char *));
+	if (keys == NULL)
+		return NULL;
+
+	param *q;
+	for (int i = 0; i < params->size; i++) {
+		q = &params->pairs[i];
+		char *key = je_strndup(q->key.base, q->key.len);
+		keys[i] = key;
+	}
+
+    qsort(keys, (size_t) params->size, sizeof(char *), compare_keys);
+
+	return keys;
+}
 
 void
-param_sort(param_vector *params) {
-	if (params != NULL && params->pairs != NULL) {
-		qsort(params->pairs, (size_t) params->size, sizeof(param), compare_params);
+param_sort_free(char **keys, param_vector *params) {
+	for (int i = 0; i < params->size; i++) {
+		char *key = keys[i];
+		je_free(key);
 	}
+	je_free(keys);
 }
+
 
 void
 param_free(param_vector *params) {

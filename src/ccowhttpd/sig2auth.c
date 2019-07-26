@@ -89,49 +89,91 @@ int sig2auth_sign_request(param_vector *query_param, param_vector *headers, char
     char *path, char *secret, char *signature, int signature_max_size) {
 	int err = 0;
 
-	param_sort(query_param);
-	param_sort(headers);
+	param_dump("Headers sig2: ", headers);
 
-	param *md5 = param_find_value(H2O_STRLIT("content-md5"), headers);
-	param *content_type = param_find_value(H2O_STRLIT("content-type"), headers);
-	param *date = param_find_value(H2O_STRLIT("date"), headers);
-	param *amz_date = param_find_value(H2O_STRLIT("x-amz-date"), headers);
-	param *expires = param_find_value(H2O_STRLIT("expires"), headers);
+	int count = param_count(headers);
 
-	if (amz_date) {
-		date = NULL;
+	char md5[256] = "";
+	char content_type[256] = "";
+	char date[256] = "";
+	char amz_date[256] = "";
+	char expires[256] = "";
+
+	char **keys = param_sort(headers);
+	// Add known headers
+	for (int i=0; i<count; i++) {
+		param *h = param_find(keys[i], strlen(keys[i]), headers);
+		if (param_key_equal(h, H2O_STRLIT("content-md5"))) {
+			param_value_str(h, md5, 256);
+			continue;
+		}
+		if (param_key_equal(h, H2O_STRLIT("content-type"))) {
+			param_value_str(h, content_type, 256);
+			continue;
+		}
+		if (param_key_equal(h, H2O_STRLIT("date"))) {
+			param_value_str(h, date, 256);
+			continue;
+		}
+		if (param_key_equal(h, H2O_STRLIT("amz_date"))) {
+			param_value_str(h, amz_date, 256);
+			continue;
+		}
+		if (param_key_equal(h, H2O_STRLIT("expires"))) {
+			param_value_str(h, expires, 256);
+			continue;
+		}
 	}
-	if (expires) {
-		date = expires;
+
+
+	log_trace(lg, "Method: %s", method);
+	log_trace(lg, "Content_type: %s", content_type);
+	log_trace(lg, "Date: %s", date);
+	log_trace(lg, "amz_Date: %s", amz_date);
+	log_trace(lg, "Expires: %s", expires);
+
+	if (amz_date[0]) {
+		date[0] = 0;
+	}
+	if (expires[0]) {
+		strcpy(date, expires);
 	}
 
 	char out[BUF_SIZE] = "";
-	char tmp[2048] = "";
+	char tmp[4096] = "";
+
+
 
 	sprintf(out, "%s\n%s\n%s\n%s\n",
 	    method,
-	    (md5 != NULL ? md5->val.base : ""),
-	    (content_type != NULL ? content_type->val.base : ""),
-	    (date != NULL ? date->val.base : "")
+	    (md5[0] ? md5 : ""),
+	    (content_type[0] ? content_type : ""),
+	    (date[0] ? date : "")
 	    );
 
+	log_trace(lg, "Method:\n%s\n", out);
 
 	// Add amz headers
-	int count = param_count(headers);
-	if (count > 0) {
-		for (int i=0; i<count; i++) {
-			param *h = param_get(i, headers);
-			if (h) {
-				if (!strstr(h->key.base,"x-amz-"))
-					continue;
-				sprintf(tmp, "%s:%s\n",
-				    h->key.base,
-				    (h->val.base != NULL ? h->val.base : "")
-				    );
+	for (int i=0; i<count; i++) {
+		param *h = param_find(keys[i], strlen(keys[i]), headers);
+		if (h) {
+			char *key = je_strndup(h->key.base, h->key.len);
+			if (strstr(key,"x-amz-")) {
+				if (h->val.len > 0) {
+					char *val = je_strndup(h->val.base, h->val.len);
+					sprintf(tmp, "%s:%s\n",	key, val);
+					je_free(val);
+				} else {
+					sprintf(tmp, "%s:%s\n",	key, "");
+				}
 				strcat(out, tmp);
 			}
+			je_free(key);
 		}
 	}
+	param_sort_free(keys, headers);
+
+	log_trace(lg, "Add headers:\n%s\n", out);
 
 	// canonical request
 	if (path == NULL || *path == '\0') {
@@ -143,24 +185,33 @@ int sig2auth_sign_request(param_vector *query_param, param_vector *headers, char
 		strcat(out, path);
 	}
 
+	log_trace(lg, "Add request:\n%s\n", out);
+
 	int n = 0;
 	char query[BUF_SIZE] = "";
 	count = param_count(query_param);
+
 	if (count > 0) {
+		keys = param_sort(query_param);
 		for (int i=0; i<count; i++) {
-			param *q = param_get(i, query_param);
-			sprintf(tmp, ",%s,", q->key.base);
-			if (!strstr(QSTRINGS, tmp))
-				continue;
-			if (n > 0)
-				strcat(query,"&");
-			n++;
-			strcat(query,q->key.base);
-			if (q->val.base != NULL) {
-				strcat(query, "=");
-				strcat(query, q->val.base);
+			param *q = param_find(keys[i], strlen(keys[i]), query_param);
+			if (q) {
+				sprintf(tmp, ",%s,", keys[i]);
+				if (strstr(QSTRINGS, tmp)) {
+					if (n > 0)
+						strcat(query,"&");
+					n++;
+					strcat(query, keys[i]);
+					if (q->val.len > 0) {
+						char *val = je_strndup(q->val.base, q->val.len);
+						strcat(query, "=");
+						strcat(query, val);
+						je_free(val);
+					}
+				}
 			}
 		}
+		param_sort_free(keys, query_param);
 	}
 	if (n > 0) {
 		strcat(out,"?");
@@ -223,20 +274,26 @@ int query_sign_request(param_vector *query_param, char *method,
 	char query[BUF_SIZE] = "";
 	int count = param_count(query_param);
 	if (count > 0) {
+		char **keys = param_sort(query_param);
 		for (int i=0; i<count; i++) {
-			param *q = param_get(i, query_param);
-			sprintf(tmp, ",%s,", q->key.base);
-			if (!strstr(QSTRINGS, tmp))
-				continue;
-			if (n > 0)
-				strcat(query,"&");
-			n++;
-			strcat(query,q->key.base);
-			if (q->val.base != NULL) {
-				strcat(query, "=");
-				strcat(query, q->val.base);
+			param *q = param_find(keys[i], strlen(keys[i]), query_param);
+			if (q) {
+				sprintf(tmp, ",%s,", keys[i]);
+				if (strstr(QSTRINGS, tmp)) {
+					if (n > 0)
+						strcat(query,"&");
+					n++;
+					strcat(query, keys[i]);
+					if (q->val.len > 0) {
+						char *val = je_strndup(q->val.base, q->val.len);
+						strcat(query, "=");
+						strcat(query, val);
+						je_free(val);
+					}
+				}
 			}
 		}
+		param_sort_free(keys, query_param);
 	}
 	if (n > 0) {
 		strcat(out,"?");

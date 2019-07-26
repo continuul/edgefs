@@ -71,6 +71,42 @@ tm_is_lessthan(struct tm *x, struct tm *y)
 
 #define MAX_AUTH_SIZE 8192
 
+static char *
+sanitize(char *resource) {
+	char *p;
+	p = resource;
+	while (*p) {
+		if (*p == '<')
+			*p = '[';
+		if (*p == '>')
+			*p = ']';
+		p++;
+	}
+	return resource;
+}
+
+static int
+send_error_ext(h2o_req_t *req, int status,
+		char *reason, char *code, char *message, char* bid, char *oid) {
+	char resource[2048];
+	char xml[2048];
+	char requestId[64];
+	if (bid && oid) {
+		sprintf(resource,"%s/%s", bid, oid);
+	} else if (bid) {
+		sprintf(resource,"%s", bid);
+	} else {
+		strcpy(resource,"");
+	}
+	headers_get(&req->res.headers, "x-amz-request-id", requestId, 64);
+	log_error(lg, "%s error: %s code: %s reason: %s, resource: %s", requestId, message, code, reason, resource);
+	sprintf(xml, "<?xml version=\"1.0\"?><Error><Code>%s</Code><Message>%s</Message><Resource>%s</Resource><RequestId>%s</RequestId></Error>",
+			code, message, sanitize(resource), requestId);
+	h2o_send_error_generic(req, status, reason, xml, 0);
+	return 0;
+}
+
+
 
 static int
 send_dir_listing(h2o_req_t *req, struct objio_info *ci, int is_get)
@@ -733,7 +769,7 @@ _exit: if (query_params)
 static int
 query_authentication(ccowobj_handler_t *self, h2o_req_t *req,
 		param_vector *query_params, param_vector *headers,
-		int method_type, char *rpath, User **user) {
+		int method_type, char *rpath, User **user, char *bid, char *oid) {
 
 	char key_str[MAX_ITEM_SIZE];
 	char expected_str[MAX_ITEM_SIZE];
@@ -751,7 +787,7 @@ query_authentication(ccowobj_handler_t *self, h2o_req_t *req,
 	int res = uri_unescape(expected_str, strlen(expected_str));
 	if (res < 0) {
 		log_error(lg, "Invalid signature %s", param_str(expected, expected_str, MAX_ITEM_SIZE - 1));
-		h2o_send_error_403(req, "Forbidden", "Invalid signature", 0);
+		send_error_ext(req, 403, "Forbidden", "AccessDenied", "Invalid signature", bid, oid);
 		return -EINVAL;
 	}
 	expected_str[res] = 0;
@@ -760,13 +796,13 @@ query_authentication(ccowobj_handler_t *self, h2o_req_t *req,
 	err = get_user_by_authkey(tc, self->cid, self->tid, key_str, user);
 	if (err) {
 		log_error(lg, "User %s not found", key_str);
-		h2o_send_error_403(req, "Forbidden", "User not found", 0);
+		send_error_ext(req, 403, "Forbidden", "AccessDenied", "User not found", bid, oid);
 		return -EINVAL;
 	}
 	const char *secret = user_property_string(*user, "secret", NULL);
 	if (secret == NULL) {
 		log_error(lg, "User %s invalid", key_str);
-		h2o_send_error_403(req, "Forbidden", "User invalid", 0);
+		send_error_ext(req, 403, "Forbidden", "AccessDenied", "User invalid", bid, oid);
 		return -EINVAL;
 	}
 
@@ -778,7 +814,7 @@ query_authentication(ccowobj_handler_t *self, h2o_req_t *req,
 			MAX_ITEM_SIZE);
 	if (err) {
 		log_error(lg, "Could not sign");
-		h2o_send_error_403(req, "Forbidden", "Could not sign", 0);
+		send_error_ext(req, 403, "Forbidden", "AccessDenied", "Could not sign", bid, oid);
 		return -EINVAL;
 	}
 
@@ -786,7 +822,7 @@ query_authentication(ccowobj_handler_t *self, h2o_req_t *req,
 	log_trace(lg, "Signature: %s", signature);
 	if (strcmp(signature, expected_str) != 0) {
 		log_error(lg, "Unexpected signature query");
-		h2o_send_error_403(req, "Forbidden", "Unexpected signature", 0);
+		send_error_ext(req, 403, "Forbidden", "AccessDenied", "Unexpected signature", bid, oid);
 		return -EINVAL;
 	}
 	return 0;
@@ -796,7 +832,7 @@ query_authentication(ccowobj_handler_t *self, h2o_req_t *req,
 static int
 version2_authentication(ccowobj_handler_t *self, h2o_req_t *req,
 		param_vector *query_params, param_vector *headers,
-		int method_type, char *rpath, char *auth_str, User **user) {
+		int method_type, char *rpath, char *auth_str, User **user, char *bid, char *oid) {
 
 	char expected_str[MAX_ITEM_SIZE];
 	char signature[MAX_SIGNATURE_LENGTH];
@@ -809,7 +845,7 @@ version2_authentication(ccowobj_handler_t *self, h2o_req_t *req,
 	char *p = strstr(auth_str, ":");
 	if (p == NULL) {
 		log_error(lg, "Invalid authorization %s", auth_str);
-		h2o_send_error_403(req, "Forbidden", "Invalid authorization", 0);
+		send_error_ext(req, 403, "Forbidden", "AccessDenied", "Invalid authorization", bid, oid);
 		return -EINVAL;
 	}
 	expected = p + 1;
@@ -819,13 +855,13 @@ version2_authentication(ccowobj_handler_t *self, h2o_req_t *req,
 	err = get_user_by_authkey(tc, self->cid, self->tid, key, user);
 	if (err) {
 		log_error(lg, "User %s not found", key);
-		h2o_send_error_403(req, "Forbidden", "User not found", 0);
+		send_error_ext(req, 403, "Forbidden", "AccessDenied", "User not found", bid, oid);
 		return -EINVAL;
 	}
 	const char *secret = user_property_string(*user, "secret", NULL);
 	if (secret == NULL) {
 		log_error(lg, "User %s invalid, no secret", key);
-		h2o_send_error_403(req, "Forbidden", "User invalid", 0);
+		send_error_ext(req, 403, "Forbidden", "AccessDenied", "User invalid", bid, oid);
 		return -EINVAL;
 	}
 
@@ -838,7 +874,7 @@ version2_authentication(ccowobj_handler_t *self, h2o_req_t *req,
 			MAX_SIGNATURE_LENGTH);
 	if (err) {
 		log_error(lg, "Could not sign");
-		h2o_send_error_403(req, "Forbidden", "Could not sign", 0);
+		send_error_ext(req, 403, "Forbidden", "AccessDenied", "Could not sign", bid, oid);
 		return -EINVAL;
 	}
 
@@ -846,7 +882,7 @@ version2_authentication(ccowobj_handler_t *self, h2o_req_t *req,
 	log_trace(lg, "Signature: %s", signature);
 	if (strcmp(signature, expected) != 0) {
 		log_error(lg, "Unexpected signature v2");
-		h2o_send_error_403(req, "Forbidden", "Unexpected signature", 0);
+		send_error_ext(req, 403, "Forbidden", "AccessDenied", "Unexpected signature", bid, oid);
 		return -EINVAL;
 	}
 	return 0;
@@ -856,7 +892,7 @@ version2_authentication(ccowobj_handler_t *self, h2o_req_t *req,
 static int
 version4_authentication(ccowobj_handler_t *self, h2o_req_t *req,
 		param_vector *query_params, param_vector *headers,
-		int method_type, char *rpath, char *auth_str, User **user) {
+		int method_type, char *rpath, char *auth_str, User **user, char *bid, char *oid) {
 
 	char signature[MAX_SIGNATURE_LENGTH];
 	int err;
@@ -872,14 +908,14 @@ version4_authentication(ccowobj_handler_t *self, h2o_req_t *req,
 
 	if (credential_scope == NULL || signedHeaders == NULL || expected == NULL) {
 		log_error(lg, "Invalid authorization %s", auth_str);
-		h2o_send_error_403(req, "Forbidden", "Invalid authorization", 0);
+		send_error_ext(req, 403, "Forbidden", "AccessDenied", "Invalid authorization", bid, oid);
 		return -EINVAL;
 	}
 
 	p = strstr(credential_scope, ",");
 	if (p == NULL) {
 		log_error(lg, "Invalid authorization %s", auth_str);
-		h2o_send_error_403(req, "Forbidden", "Invalid authorization", 0);
+		send_error_ext(req, 403, "Forbidden", "AccessDenied", "Invalid authorization", bid, oid);
 		return -EINVAL;
 	}
 	*p = 0;
@@ -887,7 +923,7 @@ version4_authentication(ccowobj_handler_t *self, h2o_req_t *req,
 	p = strstr(credential_scope, "/");
 	if (p == NULL) {
 		log_error(lg, "Invalid authorization %s", auth_str);
-		h2o_send_error_403(req, "Forbidden", "Invalid authorization", 0);
+		send_error_ext(req, 403, "Forbidden", "AccessDenied", "Invalid authorization", bid, oid);
 		return -EINVAL;
 	}
 	memcpy(key, credential_scope, (p - credential_scope));
@@ -897,7 +933,7 @@ version4_authentication(ccowobj_handler_t *self, h2o_req_t *req,
 	p = strstr(signedHeaders, ",");
 	if (p == NULL) {
 		log_error(lg, "Invalid authorization %s", auth_str);
-		h2o_send_error_403(req, "Forbidden", "Invalid authorization", 0);
+		send_error_ext(req, 403, "Forbidden", "AccessDenied", "Invalid authorization", bid, oid);
 		return -EINVAL;
 	}
 	*p = 0;
@@ -918,13 +954,13 @@ version4_authentication(ccowobj_handler_t *self, h2o_req_t *req,
 	err = get_user_by_authkey(tc, self->cid, self->tid, key, user);
 	if (err) {
 		log_error(lg, "User %s not found", key);
-		h2o_send_error_403(req, "Forbidden", "User not found", 0);
+		send_error_ext(req, 403, "Forbidden", "AccessDenied", "User invalid", bid, oid);
 		return -EINVAL;
 	}
 	const char *secret = user_property_string(*user, "secret", NULL);
 	if (secret == NULL) {
 		log_error(lg, "User %s invalid, no secret", key);
-		h2o_send_error_403(req, "Forbidden", "User invalid", 0);
+		send_error_ext(req, 403, "Forbidden", "AccessDenied", "User invalid", bid, oid);
 		return -EINVAL;
 	}
 	log_trace(lg, "secret  key       : %s", secret);
@@ -939,7 +975,7 @@ version4_authentication(ccowobj_handler_t *self, h2o_req_t *req,
 			signature, MAX_SIGNATURE_LENGTH);
 	if (err) {
 		log_error(lg, "Could not sign");
-		h2o_send_error_403(req, "Forbidden", "Could not sign", 0);
+		send_error_ext(req, 403, "Forbidden", "AccessDenied", "Could not sign", bid, oid);
 		return -EINVAL;
 	}
 
@@ -947,7 +983,7 @@ version4_authentication(ccowobj_handler_t *self, h2o_req_t *req,
 	log_trace(lg, "Signature: %s", signature);
 	if (strcmp(signature, expected) != 0) {
 		log_error(lg, "Unexpected signature v4");
-		h2o_send_error_403(req, "Forbidden", "Unexpected signature", 0);
+		send_error_ext(req, 403, "Forbidden", "AccessDenied", "Unexpected signature", bid, oid);
 		return -EINVAL;
 	}
 
@@ -974,6 +1010,7 @@ on_req(h2o_handler_t *_self, h2o_req_t *req)
 	char oid[2048];
 	int bid_size, oid_size;
 	char host[MAX_ITEM_SIZE];
+	char content_length[64];
 	ccow_t tc = h2o_context_get_handler_context(req->conn->ctx, &self->super);
 
 	add_headers_unconditional(req);
@@ -1011,7 +1048,22 @@ on_req(h2o_handler_t *_self, h2o_req_t *req)
 		goto _exit;
 	}
 	err = param_add(PARAM_STR("host"), PARAM_STR(host), headers);
+	if (err) {
+		log_error(lg, "Parameter add error: %d", err);
+		h2o_send_error_500(req, "Server error", "please try again later", 0);
+		goto _exit;
+	}
+	log_trace(lg, "Input len: %lu", req->entity.len);
+	sprintf(content_length,"%lu",req->entity.len);
+	err = param_add(PARAM_STR("content-length"), PARAM_STR(content_length), headers);
+	if (err) {
+		log_error(lg, "Parameter add error: %d", err);
+		h2o_send_error_500(req, "Server error", "please try again later", 0);
+		goto _exit;
+	}
+
 	param_dump("headers", headers);
+
 
 	/* build path */
 	req_path_prefix = self->conf_path.len;
@@ -1073,7 +1125,7 @@ on_req(h2o_handler_t *_self, h2o_req_t *req)
 			if (self->authOn)
 				goto _auth;
 			log_error(lg, "Public access denied err: %d", err);
-			h2o_send_error_403(req, "Forbidden", "Access denied", 0);
+			send_error_ext(req, 403, "Forbidden", "AccessDenied", "Access denied", bid, oid);
 			goto _exit;
 		}
 		goto _public;
@@ -1087,25 +1139,25 @@ _auth:
 			param_has(H2O_STRLIT("Expires"), query_params) &&
 			param_has(H2O_STRLIT("Signature"), query_params)) {
 			err = query_authentication(self, req, query_params, headers,
-					method_type, rpath, &user);
+					method_type, rpath, &user, bid, oid);
 			if (err) {
 				goto _exit;
 			}
 		} else if (auth && strncmp(auth_str, "AWS ", 4) == 0) {
 			err = version2_authentication(self, req, query_params, headers,
-					method_type, rpath, auth_str, &user);
+					method_type, rpath, auth_str, &user, bid, oid);
 			if (err) {
 				goto _exit;
 			}
 		} else if (auth && strncmp(auth_str, "AWS4-HMAC-SHA256 ", 17) == 0) {
 			err = version4_authentication(self, req, query_params, headers,
-					method_type, rpath, auth_str, &user);
+					method_type, rpath, auth_str, &user, bid, oid);
 			if (err) {
 				goto _exit;
 			}
 		} else {
 			log_error(lg, "No signature");
-			h2o_send_error_403(req, "Forbidden", "No signature", 0);
+			send_error_ext(req, 403, "Forbidden", "AccessDenied", "No signature", bid, oid);
 			goto _exit;
 		}
 	}
@@ -1116,7 +1168,7 @@ _auth:
 		err = get_access(tc, self->cid, self->tid, bid, oid, operation, user, &acl);
 		if (err != 0) {
 			log_error(lg, "Access denied err: %d", err);
-			h2o_send_error_403(req, "Forbidden", "Access denied", 0);
+			send_error_ext(req, 403, "Forbidden", "AccessDenied", "Access denied", bid, oid);
 			goto _exit;
 		}
 	}

@@ -216,40 +216,20 @@ trlog_fetch_tenants(ccow_t tc, char ***tid_arr, int *tid_arr_len)
 {
 	int err = 0;
 	char **arr = NULL;
-	int pos = 0;
+	int idx = 0, pos = 0;
 	struct ccow_metadata_kv *kv = NULL;
 	ccow_lookup_t iter = NULL;
 
 	*tid_arr = NULL;
 	*tid_arr_len = 0;
 
-        ccow_completion_t c;
-	err = ccow_create_completion(tc, NULL, NULL, 1, &c);
-	if (err) {
-		log_error(lg, "Unable to create completion for trlog processing "
-		    "while fetching tenants: %d", err);
-		return err;
-	}
 
-	struct iovec iov = { .iov_base = TRLOG_TID_PREFIX,
-		.iov_len = strlen(TRLOG_TID_PREFIX) + 1};
-        err = ccow_admin_pseudo_get("", 1, "", 1, "", 1, "", 1,
-	    &iov, 1, FLEXHASH_MAX_SERVERS, CCOW_GET_LIST, c, &iter);
+	err = ccow_tenant_lookup(tc, "", 1, TRLOG_TID_PREFIX,
+		strlen(TRLOG_TID_PREFIX) + 1, FLEXHASH_MAX_SERVERS, &iter);
 	if (err) {
-		ccow_release(c);
+		log_error(lg, "Tenant lookup error: %d", err);
 		return err;
-	}
-
-	err = ccow_wait(c, 0);
-	if (err) {
-		if (iter)
-			ccow_lookup_release(iter);
-		if (err != -ENOENT)
-			log_error(lg, "Tenant lookup error: %d", err);
-		return err;
-	}
-
-	if (iter == 0) {
+	} else if (iter == 0) {
 		log_warn(lg, "Tenant lookup error: %d (invalid param)", -EINVAL);
 		return -EINVAL;
 	}
@@ -260,15 +240,17 @@ trlog_fetch_tenants(ccow_t tc, char ***tid_arr, int *tid_arr_len)
 		goto _err;
 	}
 
-	while ((kv = ccow_lookup_iter(iter, CCOW_MDTYPE_NAME_INDEX, pos))) {
-		if (strspn(kv->key, TRLOG_TID_PREFIX) != strlen(TRLOG_TID_PREFIX))
-			break;
+	while ((kv = ccow_lookup_iter(iter, CCOW_MDTYPE_NAME_INDEX, idx))) {
+		if (strspn(kv->key, TRLOG_TID_PREFIX) != strlen(TRLOG_TID_PREFIX)) {
+			idx++;
+			continue;
+		}
 		arr[pos] = je_strdup(kv->key);
 		if (!arr[pos]) {
 			log_error(lg, "%s: out of memory", __func__);
 			goto _err;
 		}
-		pos++;
+		pos++;idx++;
 	}
 	if (pos == 0) {
 		je_free(arr);

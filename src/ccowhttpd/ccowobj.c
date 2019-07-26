@@ -739,6 +739,7 @@ query_authentication(ccowobj_handler_t *self, h2o_req_t *req,
 	char expected_str[MAX_ITEM_SIZE];
 	char signature[MAX_SIGNATURE_LENGTH];
 	int err;
+	ccow_t tc = h2o_context_get_handler_context(req->conn->ctx, &self->super);
 
 	log_trace(lg, "Query authentication");
 
@@ -756,7 +757,7 @@ query_authentication(ccowobj_handler_t *self, h2o_req_t *req,
 	expected_str[res] = 0;
 
 	log_trace(lg, "Key: %s", key_str);
-	err = get_user_by_authkey(self->cid, self->tid, key_str, user);
+	err = get_user_by_authkey(tc, self->cid, self->tid, key_str, user);
 	if (err) {
 		log_error(lg, "User %s not found", key_str);
 		h2o_send_error_403(req, "Forbidden", "User not found", 0);
@@ -800,6 +801,7 @@ version2_authentication(ccowobj_handler_t *self, h2o_req_t *req,
 	char expected_str[MAX_ITEM_SIZE];
 	char signature[MAX_SIGNATURE_LENGTH];
 	int err;
+	ccow_t tc = h2o_context_get_handler_context(req->conn->ctx, &self->super);
 
 	log_trace(lg, "Version 2 authentication");
 	char *key = auth_str + 4;
@@ -814,7 +816,7 @@ version2_authentication(ccowobj_handler_t *self, h2o_req_t *req,
 	*p = 0;
 	log_trace(lg, "Key: %s", key);
 
-	err = get_user_by_authkey(self->cid, self->tid, key, user);
+	err = get_user_by_authkey(tc, self->cid, self->tid, key, user);
 	if (err) {
 		log_error(lg, "User %s not found", key);
 		h2o_send_error_403(req, "Forbidden", "User not found", 0);
@@ -858,6 +860,7 @@ version4_authentication(ccowobj_handler_t *self, h2o_req_t *req,
 
 	char signature[MAX_SIGNATURE_LENGTH];
 	int err;
+	ccow_t tc = h2o_context_get_handler_context(req->conn->ctx, &self->super);
 
 	log_trace(lg, "Version 4 authentication");
 
@@ -912,7 +915,7 @@ version4_authentication(ccowobj_handler_t *self, h2o_req_t *req,
 	log_trace(lg, "auth  key       : %s", key);
 	log_trace(lg, "region          : %s", self->region);
 
-	err = get_user_by_authkey(self->cid, self->tid, key, user);
+	err = get_user_by_authkey(tc, self->cid, self->tid, key, user);
 	if (err) {
 		log_error(lg, "User %s not found", key);
 		h2o_send_error_403(req, "Forbidden", "User not found", 0);
@@ -971,6 +974,7 @@ on_req(h2o_handler_t *_self, h2o_req_t *req)
 	char oid[2048];
 	int bid_size, oid_size;
 	char host[MAX_ITEM_SIZE];
+	ccow_t tc = h2o_context_get_handler_context(req->conn->ctx, &self->super);
 
 	add_headers_unconditional(req);
 
@@ -1064,7 +1068,7 @@ on_req(h2o_handler_t *_self, h2o_req_t *req)
 
 	// Public check
 	if (self->aclOn) {
-		err = get_access(self->cid, self->tid, bid, oid, operation, user, &acl);
+		err = get_access(tc, self->cid, self->tid, bid, oid, operation, user, &acl);
 		if (err != 0) {
 			if (self->authOn)
 				goto _auth;
@@ -1109,7 +1113,7 @@ _auth:
 
 	// ACL check
 	if (self->aclOn) {
-		err = get_access(self->cid, self->tid, bid, oid, operation, user, &acl);
+		err = get_access(tc, self->cid, self->tid, bid, oid, operation, user, &acl);
 		if (err != 0) {
 			log_error(lg, "Access denied err: %d", err);
 			h2o_send_error_403(req, "Forbidden", "Access denied", 0);

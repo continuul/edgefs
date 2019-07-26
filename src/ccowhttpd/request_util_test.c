@@ -114,10 +114,13 @@ test_query(char *q)
 
 	param_dump("params", &params);
 
-	printf("\nSorting..\n");
-	param_sort(&params);
-
-	param_dump("sorted", &params);
+	printf("\nSorting query..\n");
+	char **keys = param_sort(&params);
+	for (int i=0; i<param_count(&params); i++) {
+		param *p = param_find(keys[i], strlen(keys[i]), &params);
+		printf("Sorted %s\n", param_str(p, buf, BUF_SIZE));
+	}
+	param_sort_free(keys, &params);
 
 	qf = param_find(H2O_STRLIT(SKEY), &params);
 	if (qf != NULL) {
@@ -151,6 +154,7 @@ test_headers()
 	printf("\nHeaders\n");
 
 	param_vector params;
+	char buf[BUF_SIZE];
 
 
 	h2o_mem_pool_t pool;
@@ -179,10 +183,19 @@ test_headers()
 
 	param_dump("headers", &params);
 
-	printf("\nSorting..\n");
-	param_sort(&params);
+	param *p = param_find(H2O_STRLIT("name1"), &params);
+	printf("Found %s\n", param_str(p, buf, BUF_SIZE));
 
-	param_dump("sorted headers", &params);
+	printf("\nSorting headers..\n");
+	char **keys = param_sort(&params);
+	for (int i=0; i<param_count(&params); i++) {
+		param *p = param_find(keys[i], strlen(keys[i]), &params);
+		printf("Sorted %s\n", param_str(p, buf, BUF_SIZE));
+	}
+	param_sort_free(keys, &params);
+
+	param *q = param_find(H2O_STRLIT("name1"), &params);
+	printf("Found %s\n", param_str(q, buf, BUF_SIZE));
 
 	param_free(&params);
 
@@ -324,8 +337,13 @@ test_signature_query(char * cquery, char *path, char *method,
 	    signature,
 	    MAX_SIGNATURE_LENGTH);
 
-	printf("\nSignature\n%s\n", signature);
+	if (err) {
+		printf("\nSignature error: %d\n", err);
+	} else {
+		printf("\nSignature\n%s\n", signature);
+	}
 	assert(err == 0);
+		printf("\nExpected\n%s\n", expected);
 
 	assert(strcmp(signature, expected) == 0);
 
@@ -345,7 +363,7 @@ main()
 
 	test_query("abc=10");
 
-	test_query("abc=abc&acl");
+	test_query("oo=o1&zz=a3&abc=abc&acl");
 
 	test_query("acl");
 
@@ -400,9 +418,9 @@ main()
 
 	test_md5();
 
-	// 	http://10.3.32.230:9982/bk1/x13?AWSAccessKeyId=PTAA8RZIP6WJP5SRH2MS&Expires=1518910725&Signature=vHt0OPOOa%2BzJJ0P2kc9ZQVi9teU%3D
-	test_signature_query("Expires=1518910725", "/bk1/x13", "GET",
-	    "lT3Mj0qCR74KhCt88L4fcEc2QFBHvnkAHEW08Wtj",	"vHt0OPOOa+zJJ0P2kc9ZQVi9teU=");
+	// 	http://10.3.32.230:9982/bk1/x13?AWSAccessKeyId=PTAA8RZIP6WJP5SRH2MS&Expires=1618910725&Signature=vHt0OPOOa%2BzJJ0P2kc9ZQVi9teU%3D
+	test_signature_query("Expires=1618910725", "/bk1/x13", "GET",
+	    "lT3Mj0qCR74KhCt88L4fcEc2QFBHvnkAHEW08Wtj",	"Hu2PAY5tPDvbPUrPmb/umT77fSA=");
 
 	test_unescape();
 

@@ -147,8 +147,7 @@ sig4auth_sign_request(h2o_mem_pool_t *pool, param_vector *query_params, param_ve
 {
 	int err = 0;
 	char path_str[BUF_SIZE];
-
-	param_sort(query_params);
+	char **keys;
 
 	if (!path || strlen(path) == 0) {
 		strcpy(path_str, "/");
@@ -164,21 +163,28 @@ sig4auth_sign_request(h2o_mem_pool_t *pool, param_vector *query_params, param_ve
 	char tmp[BUF_SIZE];
 	int count = param_count(query_params);
 	if (count > 0) {
+		keys = param_sort(query_params);
 		for (int i=0; i<count; i++) {
-			param *q = param_get(i, query_params);
-			sprintf(tmp, ",%s,", q->key.base);
+			param *q = param_find(keys[i], strlen(keys[i]), query_params);
 			if (n > 0)
 				strcat(query,"&");
 			n++;
-			strcat(query,q->key.base);
+			char *key = je_strndup(q->key.base, q->key.len);
+			strcat(query, key);
 			strcat(query, "=");
 			if (q->val.base != NULL) {
-				res = uri_escape(q->val.base, q->val.len, tmp, BUF_SIZE, 1);
-				if (res <= 0)
+				char *val = je_strndup(q->val.base, q->val.len);
+				res = uri_escape(val, q->val.len, tmp, BUF_SIZE, 1);
+				je_free(val);
+				if (res <= 0) {
+					je_free(key);
 					return -EINVAL;
+				}
 				strncat(query, tmp, res);
 			}
+			je_free(key);
 		}
+		param_sort_free(keys, query_params);
 	}
 
 
@@ -191,7 +197,8 @@ sig4auth_sign_request(h2o_mem_pool_t *pool, param_vector *query_params, param_ve
 		log_error(lg, "signed headers %s parse error: %d", signedHeaders, err);
 		return err;
 	}
-	param_sort(&signed_headers);
+	param_dump("InputHeaders", headers);
+	param_dump("signedHeaders", &signed_headers);
 
 	// canonical headers
 	char canonical_headers[BUF_SIZE] = "";
@@ -200,9 +207,10 @@ sig4auth_sign_request(h2o_mem_pool_t *pool, param_vector *query_params, param_ve
 	param *q;
 	param *value;
 
+	keys = param_sort(&signed_headers);
 	for (int i = 0; i < signed_headers.size; i++) {
 		hlen = 0;
-		q = &signed_headers.pairs[i];
+		q = param_find(keys[i], strlen(keys[i]), &signed_headers);
 		memcpy(header, q->key.base, q->key.len);
 		hlen += q->key.len;
 		header[hlen] = ':';
@@ -223,6 +231,7 @@ sig4auth_sign_request(h2o_mem_pool_t *pool, param_vector *query_params, param_ve
 		header[hlen] = 0;
 		strcat(canonical_headers, header);
 	}
+	param_sort_free(keys, &signed_headers);
 
 
 	// Payload hash
@@ -257,11 +266,26 @@ sig4auth_sign_request(h2o_mem_pool_t *pool, param_vector *query_params, param_ve
 	//,Signature=fd3560cd198508e84b665b86626593d1b2d9f89a5b322c61438b6c5df2d54de9"
 
 	log_trace(lg, "credential_scope: %s", credential_scope);
-	if (strstr(credential_scope, region) == NULL) {
-		log_error(lg, "no region %s inside the scope %s", region, credential_scope);
+	// if (strstr(credential_scope, region) == NULL) {
+	// 	log_error(lg, "no region %s inside the scope %s", region, credential_scope);
+	// 	param_free(&signed_headers);
+	// 	return -EINVAL;
+	// }
+	char region_str[BUF_SIZE];
+	char *p1 = strchr(credential_scope, '/');
+	if (p1 == NULL) {
+		log_error(lg, "no region scope");
 		param_free(&signed_headers);
 		return -EINVAL;
 	}
+	char *p2 = strchr(p1+1, '/');
+	if (p2 == NULL) {
+		log_error(lg, "no region scope");
+		param_free(&signed_headers);
+		return -EINVAL;
+	}
+	strncpy(region_str, p1 + 1, p2 - p1 - 1);
+	log_trace(lg, "region_scope: %s", credential_scope);
 
 	char canonical_request[BUF_SIZE];
 	sprintf(canonical_request, "%s\n%s\n%s\n%s\n%s\n%s", method,
@@ -287,7 +311,7 @@ sig4auth_sign_request(h2o_mem_pool_t *pool, param_vector *query_params, param_ve
 	sig4auth_hmac_gen((uint8_t *)prefixed_secret_key,
 	    (uint8_t)strlen(prefixed_secret_key), (uint8_t *)date, hmac_signing_interim);
 	sig4auth_hmac_gen((uint8_t *)&hmac_signing_interim, SHA256_DIGEST_LENGTH,
-	    (uint8_t *)region, hmac_signing_interim);
+	    (uint8_t *)region_str, hmac_signing_interim);
 	sig4auth_hmac_gen((uint8_t *)&hmac_signing_interim, SHA256_DIGEST_LENGTH,
 	    (uint8_t *)"s3", hmac_signing_interim);
 	sig4auth_hmac_gen((uint8_t *)&hmac_signing_interim, SHA256_DIGEST_LENGTH,

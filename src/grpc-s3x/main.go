@@ -187,15 +187,11 @@ func InitS3x(svc string, fgMode bool) {
 		log.Fatalf("Wrong service type %s != s3x for service %s", stype, svc)
 	}
 
-	// TODO: implement
-	// authType, err := efsutil.GetMDKey("", "svcs", svc, "", "X-Auth-Type")
-	// if err != nil {
-	// }
+	authType := "disabled"
+	authType, _ = efsutil.GetMDKey("", "svcs", svc, "", "X-Auth-Type")
 
-	// TODO: implement
-	//aclOn, err := efsutil.GetMDKey("", "svcs", svc, "", "X-ACL-On")
-	//if err != nil {
-	//}
+	aclOn := "false"
+	aclOn, _ = efsutil.GetMDKey("", "svcs", svc, "", "X-ACL-On")
 
 	httpPort := "4000"
 	httpPort, _ = efsutil.GetMDKey("", "svcs", svc, "", "X-HTTP-Port")
@@ -213,10 +209,21 @@ func InitS3x(svc string, fgMode bool) {
 		log.Fatalf("Service is not configured. Expecting to find serving tenant")
 	}
 
+	options := []string{}
+
+	if authType == "key_secret" {
+		options = append(options,"-a")
+	}
+
+	if aclOn == "true" {
+		options = append(options,"-l")
+	}
+
 	for _, v := range keys {
 		s := strings.Split(v, "/")
 		log.Printf("Starting ccowhttpd for svc=%s on ports %s and %s\n", svc, httpsPort, httpPort)
-		InitCmd(svc, "ccowhttpd", []string{"-c", s[0], "-t", s[1], "-S", httpsPort, httpPort})
+		opt := append(options,"-c", s[0], "-t", s[1], "-S", httpsPort, httpPort)
+		InitCmd(svc, "ccowhttpd", opt)
 		break
 	}
 

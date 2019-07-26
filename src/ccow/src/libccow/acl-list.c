@@ -37,7 +37,7 @@
  * @param oid the NULL terminated string of name id of the object
  * @param oid_size the oid size
  * @param uvid_timestamp - object timestamp or 0
- * @returns the key: bid/iod@uvid
+ * @returns the key: bid/oid@s3@uvid
  */
 static void
 get_acl_key(char *key, const char *bid, size_t bid_size, const char *oid, size_t oid_size, uint64_t uvid_timestamp)
@@ -46,9 +46,8 @@ get_acl_key(char *key, const char *bid, size_t bid_size, const char *oid, size_t
     memcpy(key, bid, bid_size);
     key[bid_size - 1] = '/';
     memcpy(key + bid_size, oid, oid_size);
-    key[bid_size + oid_size - 1] = '@';
-    sprintf(uvid, "%ld", uvid_timestamp);
-    memcpy(key + bid_size + oid_size, uvid, strlen(uvid) + 1);
+    sprintf(uvid, "@s3@%ld", uvid_timestamp);
+    memcpy(key + bid_size + oid_size - 1, uvid, strlen(uvid) + 1);
 }
 
 /**
@@ -175,6 +174,8 @@ ccow_acl_get(ccow_t tctx, const char *bid, size_t bid_size, const char *oid,
 
     char key[1024];
     get_acl_key(key, bid, bid_size, oid, oid_size, uvid_timestamp);
+
+    log_trace(lg, "ACL key: %s", key);
 
     err = ccow_sharded_list_get(tctx, service_psevdo_bucket,
                                 strlen(service_psevdo_bucket) + 1, acls_shard_context, key, strlen(key) + 1, iov, 1);

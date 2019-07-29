@@ -6,11 +6,13 @@
 # Set the base image to Ubuntu to produce amd64 binary
 FROM ubuntu:16.04 as builder
 
+ENV DEBIAN_FRONTEND noninteractive
+
 RUN apt-get update &&\
     apt-get install -y software-properties-common python-software-properties &&\
     add-apt-repository ppa:git-core/ppa &&\
     apt-get update &&\
-    apt-get install -y git make
+    apt-get install -y -qq --no-install-recommends git make
 
 RUN mkdir -p /opt/nedge
 
@@ -19,7 +21,8 @@ COPY . /opt/edgefs
 
 WORKDIR /opt/edgefs
 
-RUN /bin/bash -c "cd /opt/edgefs ; rm -rf deps ; git pull ; git checkout deps ; ls -la ; export NEDGE_HOME=/opt/nedge ; source /opt/edgefs/env.sh ; make NEDGE_NDEBUG=1 NEDGE_VERSION=${NEDGE_VERSION} world"
+RUN /bin/bash -c "cd /opt/edgefs ; ls -la ; export NEDGE_HOME=/opt/nedge ; source /opt/edgefs/env.sh ; make clean ; make NEDGE_NDEBUG=1 NEDGE_VERSION=${NEDGE_VERSION} world"
+
 RUN rm -f /opt/nedge/lib/libh2o-evloop.a /opt/nedge/lib/libbacktrace.a
 RUN cp -ar /opt/nedge/etc /opt/nedge/etc.default
 

@@ -155,24 +155,25 @@ func ConfigNode() {
 	nodeConfig.Ccow.Tenant.UnicastIO = 3
 
 	if nodeConfig.IPv4Autodetect == 1 {
+		serverIP, err := efsutil.GetIPv4Address(nodeConfig.Ccowd.Network.ServerInterfaces)
+		if err != nil {
+			fmt.Printf("Can't find IP accesible address via network interface %s Error: %v \n", nodeConfig.Ccowd.Network.ServerInterfaces, err)
+			os.Exit(1)
+		}
+
+		nodeConfig.Ccowd.Network.ServerIP4addr = serverIP
+		nodeConfig.Ccow.Network.ServerIP4addr = serverIP
+
+		brokerIP, err := efsutil.GetIPv4Address(nodeConfig.Ccow.Network.BrokerInterfaces)
+		if err != nil {
+			fmt.Printf("Can't find IP accesible address via network interface %s Error: %v \n", nodeConfig.Ccow.Network.BrokerInterfaces, err)
+			os.Exit(1)
+		}
+
+		nodeConfig.Ccow.Network.BrokerIP4addr = brokerIP
+
 		ns := os.Getenv("K8S_NAMESPACE")
 		if len(ns) == 0 {
-			serverIP, err := efsutil.GetIPv4Address(nodeConfig.Ccowd.Network.ServerInterfaces)
-			if err != nil {
-				fmt.Printf("Can't find IP accesible address via network interface %s Error: %v \n", nodeConfig.Ccowd.Network.ServerInterfaces, err)
-				os.Exit(1)
-			}
-	
-			nodeConfig.Ccowd.Network.ServerIP4addr = serverIP
-			nodeConfig.Ccow.Network.ServerIP4addr = serverIP
-	
-			brokerIP, err := efsutil.GetIPv4Address(nodeConfig.Ccow.Network.BrokerInterfaces)
-			if err != nil {
-				fmt.Printf("Can't find IP accesible address via network interface %s Error: %v \n", nodeConfig.Ccow.Network.BrokerInterfaces, err)
-				os.Exit(1)
-			}
-	
-			nodeConfig.Ccow.Network.BrokerIP4addr = brokerIP
 	
 			// corosync.conf
 			err = efsutil.CopyFile(nedgeHome+CorosyncConfIPv4ExampleFile, nedgeHome+CorosyncConfFile)

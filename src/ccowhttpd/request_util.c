@@ -35,7 +35,7 @@
 #include "request_util.h"
 #include "request.h"
 
-#define DEFAULT_SIZE 16
+#define DEFAULT_SIZE 48
 #define MAX_BUF 4096
 #define LAST_MODIFIED "last-modified"
 
@@ -438,4 +438,3 @@ str_hash_id(uint512_t *hash_id, char *buf, int len) {
     memcpy(buf, hash, len+1);
     return buf;
 }
-

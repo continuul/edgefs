@@ -28,8 +28,32 @@ type corosyncNode struct {
 
 
 func updateCorosyncConfig(nodes string) error {
+	var ccowdConf cliconfig.CcowdConf
+
+	err := efsutil.LoadJsonFile(&ccowdConf, nedgeHome + cliconfig.CCOWDJsonFile)
+	if err != nil {
+		return fmt.Errorf("ccowd.json: Error: %v\n", err)
+	}
+
+	ifname0 := strings.Split(ccowdConf.Network.ServerInterfaces, ";")[0]
+	if len(nodes) == 0 {
+		// Single node configuration, fetch IP address and build a nodeID
+		serverIP, err := efsutil.GetIPv4Address(ccowdConf.Network.ServerInterfaces)
+		if err != nil {
+			return fmt.Errorf("Couldn't determine node's IP for iface %v: %v\n", ifname0, err)
+		}
+		id := efsutil.GetMD5HashInt32(serverIP)
+		var nodeList strings.Builder
+		nodeList.WriteString("\nnodelist {\n")
+		nodeList.WriteString("  node {\n")
+		nodeList.WriteString("    ring0_addr: " +serverIP + "\n")
+		nodeList.WriteString("    nodeid: " + fmt.Sprint(id) + "\n")
+		nodeList.WriteString("  }\n}\n")
+		nodes = nodeList.String()
+	}
+
 	// Create a temporary copy from the example file
-	err := efsutil.CopyFile(nedgeHome+cliconfig.CorosyncConfIPv4ExampleFile, nedgeHome+CorosyncConfTmpFile)
+	err = efsutil.CopyFile(nedgeHome+cliconfig.CorosyncConfIPv4ExampleFile, nedgeHome+CorosyncConfTmpFile)
 	if err != nil {
 		return fmt.Errorf("Can't copy corosync file %s to %s Error: %v \n", nedgeHome+cliconfig.CorosyncConfIPv4ExampleFile, nedgeHome+CorosyncConfTmpFile, err)
 	}
@@ -46,15 +70,7 @@ func updateCorosyncConfig(nodes string) error {
 
 	// adjust log file location
 	output := regexp.MustCompile(`/opt/nedge`).ReplaceAllString(string(input), os.Getenv("NEDGE_HOME"))
-	var ccowdConf cliconfig.CcowdConf
-
-	err = efsutil.LoadJsonFile(&ccowdConf, nedgeHome + cliconfig.CCOWDJsonFile)
-	if err != nil {
-		return fmt.Errorf("ccowd.json: Error: %v\n", err)
-	}
-
 	// adjust netmtu to the current value of selected server interface name
-	ifname0 := strings.Split(ccowdConf.Network.ServerInterfaces, ";")[0]
 	netmtu := cliconfig.DetectMTU(ifname0)
 	output = regexp.MustCompile(`netmtu:.*`).ReplaceAllString(output, "netmtu: "+strconv.Itoa(netmtu))
 	// Update the temporary file with recent changes
@@ -65,21 +81,26 @@ func updateCorosyncConfig(nodes string) error {
 	return os.Rename(nedgeHome+CorosyncConfTmpFile, nedgeHome+cliconfig.CorosyncConfFile)
 }
 
-func CorosyncRun() {
+func CorosyncRun() error {
+	if _, err := regexp.Compile(targetTpl); err != nil {
+		return fmt.Errorf("target name regexp format error: \n", err)
+	}
+	
 	// creates the in-cluster config
 	config, err := rest.InClusterConfig()
 	if err != nil {
-		fmt.Printf("ERROR: couldn't create k8s client: %v\n", err)
-		os.Exit(1)
+		fmt.Printf("Couldn't create k8s client. Making a single node corosync configuration\n")
+		updateCorosyncConfig("")
+		return nil
 	}
 	// creates the clientset
 	clientset, err := kubernetes.NewForConfig(config)
 	if err != nil {
-		panic(err.Error())
+		fmt.Printf("Couldn't create k8s client. Making a single node corosync configuration\n")
+		updateCorosyncConfig("")
+		return nil
 	}
-	if _, err := regexp.Compile(targetTpl); err != nil {
-		panic(err.Error())
-	}
+
 	// Prepare a target pod name template validator
 	valid := regexp.MustCompile(targetTpl)
 	pmap := make(map[string]*corosyncNode)
@@ -159,6 +180,7 @@ func CorosyncRun() {
 		}
 		time.Sleep(time.Duration(loopDelay) * time.Second)
 	}
+	return nil
 }
 
 
@@ -188,5 +210,10 @@ func main() {
 	if len(namespace) == 0 {
 		namespace = "rook-edgefs"
 	}
-	CorosyncRun()
+	err := CorosyncRun()
+	if err != nil {
+		fmt.Printf("ERROR: %v\n", err)
+		os.Exit(1)
+	}
+	os.Exit(0)
 }

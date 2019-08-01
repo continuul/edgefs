@@ -253,7 +253,7 @@ session_update(param *comp,	int method_type, param_vector *query_params, param_v
 
 int
 session_create(objio_info_t *ci, param *comp, int method_type,
-		param_vector *query_params, param_vector *headers, session_t **session) {
+		param_vector *query_params, param_vector *headers, uint64_t expiration, session_t **session) {
 
 	session_t *ss;
 
@@ -310,6 +310,8 @@ session_create(objio_info_t *ci, param *comp, int method_type,
 	}
 
 	// Get create headers
+	ss->ci->expiration = expiration;
+
 	ss->ci->chunk_size = (uint32_t) param_find_long(H2O_STRLIT("x-ccow-chunkmap-chunk-size"),
 			ss->ci->chunk_size, headers);
 
@@ -424,6 +426,7 @@ session_dump(char *header, session_t *ss) {
 		log_trace(lg, "  ci->etag: %s", ss->ci->etag);
 		log_trace(lg, "  ci->chunk_size: %u", ss->ci->chunk_size);
 		log_trace(lg, "  ci->btree_order: %u", ss->ci->btree_order);
+		log_trace(lg, "  ci->expiration: %lu", ss->ci->expiration);
 		log_trace(lg, "  ci->num_vers: %u", ss->ci->num_vers);
 		log_trace(lg, "  ci->rep_count: %u", ss->ci->rep_count);
 		log_trace(lg, "  ci->sync_put: %u", ss->ci->sync_put);

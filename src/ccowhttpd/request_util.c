@@ -35,7 +35,7 @@
 #include "request_util.h"
 #include "request.h"
 
-#define DEFAULT_SIZE 48
+#define DEFAULT_SIZE 64
 #define MAX_BUF 4096
 #define LAST_MODIFIED "last-modified"
 

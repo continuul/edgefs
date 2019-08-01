@@ -46,6 +46,7 @@ typedef struct objio_info {
 	uint16_t num_vers;
 	uint8_t rep_count;
 	uint8_t sync_put;
+	uint64_t expiration;
 	int oflags;
 	int autocommit;
 	size_t logical_size;

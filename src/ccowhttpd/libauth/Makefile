@@ -1,5 +1,5 @@
 TARGET_LIB = libauth
-TARGET_SRCS = json_path.c user.c acl.c auth.c
+TARGET_SRCS = json_path.c user.c acl.c auth.c bucket_options.c
 #
 # Activate by exporing this env variable:
 #

@@ -34,7 +34,7 @@ extern "C" {
 #define ALLOCATE_OFF  0
 #define ALLOCATE_ON   1
 #define LOWERCASE_ON  2
-#define PARAM_DEFAULT_SIZE 16
+#define PARAM_DEFAULT_SIZE 64
 
 
 #define PARAM_STR(s) (s), strlen(s)

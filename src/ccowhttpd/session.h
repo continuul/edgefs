@@ -32,6 +32,7 @@ extern "C" {
 
 #include "param.h"
 #include "objio.h"
+#include "libauth/bucket_options.h"
 
 // Request types
 enum {
@@ -115,7 +116,7 @@ int session_update(param *comp, int method_type, param_vector *query_params, par
 		session_t *ss, int reuse);
 
 int session_create(objio_info_t *ci, param *comp, int method_type,
-	param_vector *query_params, param_vector *headers, session_t **session);
+	param_vector *query_params, param_vector *headers, uint64_t expiration, session_t **session);
 
 int session_valid(session_t *ss);
 

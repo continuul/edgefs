@@ -25,6 +25,7 @@
 #include <stdio.h>
 #include <assert.h>
 #include <string.h>
+#include <time.h>
 #include <json-c/json.h>
 
 #include "json_path.h"
@@ -112,9 +113,88 @@ test_json()
 	printf("\nDone1\n");
 }
 
+void
+test_json1() {
+	struct json_object *jobj, *obj, *arr, *exp, *tmp, *val;
+	struct json_object_iterator it;
+	struct json_object_iterator itEnd;
+	const char *name, *value;
+
+	char* json_str =
+	 "{ \"life-1\": { \"Prefix\": [ \"\" ], \"Status\": [ \"Enabled\" ],"
+		   "\"Expiration\": [ { \"Days\": [ \"10\" ] } ], \"ID\": 1 },"
+	 "  \"life-2\": { \"Prefix\": [ \"folder/\" ], \"Status\": [ \"Enabled\" ],"
+	      "\"Expiration\": [ { \"Date\": [ \"2019-07-31T00:00:00.000Z\" ] } ], \"ID\": 2 },"
+	 "  \"bucket_optionskey\": \"cltest@test@bk1\" }";
+
+	jobj = json_tokener_parse(json_str);
+
+	printf ("\n\nThe json object1: %s\n\n",json_object_to_json_string(jobj));
+
+	it = json_object_iter_begin(jobj);
+	itEnd = json_object_iter_end(jobj);
+
+	const char *status = NULL;
+	const char *prefix = NULL;
+	const char *expiration_days = NULL;
+	const char *expiration_date = NULL;
+	int expiration = 0;
+	struct tm tm;
+	time_t t;
+
+
+	while (!json_object_iter_equal(&it, &itEnd)) {
+		name = json_object_iter_peek_name(&it);
+		if (strstr(name, "life-")) {
+			val = json_object_iter_peek_value(&it);
+			value = json_object_get_string(val);
+			printf("%s -> %s\n", name, value);
+
+			if (get_by_path(val, "Status", &tmp)) {
+				status = json_object_get_string(json_object_array_get_idx(tmp, 0));
+				printf("Status: %s\n", status);
+				if (!strstr(status, "Enabled"))
+					continue;
+			}
+			if (get_by_path(val, "Prefix", &tmp)) {
+				prefix = json_object_get_string(json_object_array_get_idx(tmp, 0));
+				printf("Prefix: %s\n", prefix);
+			}
+			if (get_by_path(val, "Expiration", &exp)) {
+				arr = json_object_array_get_idx(exp, 0);
+				printf("Expiration: %s\n", json_object_get_string(tmp));
+				if (get_by_path(arr, "Days", &tmp)) {
+					expiration_days = json_object_get_string(json_object_array_get_idx(tmp, 0));
+					printf("Expiration days: %s\n", expiration_days);
+					expiration = (int) time(NULL) + atoi(expiration_days)*24*3600;
+					printf("Expiration: %d\n", expiration);
+				}
+				if (get_by_path(arr, "Date", &tmp)) {
+					expiration_date = json_object_get_string(json_object_array_get_idx(tmp, 0));
+					printf("Expiration date: %s\n", expiration_date);
+					if (strptime(expiration_date, "%Y-%m-%dT%H:%M:%S", &tm)) {
+						t = mktime(&tm);
+						if (t > 0) {
+							expiration = (int) t;
+						}
+						printf("Expiration: %d\n", expiration);
+
+					}
+				}
+			}
+		}
+		json_object_iter_next(&it);
+	}
+
+	json_object_put(jobj);
+
+	printf("\nDone2\n");
+}
+
 
 int
 main()
 {
 	test_json();
+	test_json1();
 }

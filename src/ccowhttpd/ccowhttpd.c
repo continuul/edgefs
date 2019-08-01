@@ -53,6 +53,7 @@
 #include "h2o.h"
 #include "h2o/serverutil.h"
 #include "libauth/auth.h"
+#include "libauth/bucket_options.h"
 #include "ccowobj.h"
 #include "session_cache.h"
 #include "list_cache.h"
@@ -1220,6 +1221,7 @@ static void on_sigterm(int signo)
 		return;
 	log_error(lg, "terminating...");
 	auth_destroy();
+	bucket_options_ht_destroy();
 	shutdown_requested = 1;
 	if (!h2o_barrier_done(&startup_sync_barrier)) {
 		/* initialization hasn't completed yet, exit right away */
@@ -1561,6 +1563,7 @@ main(int argc, char **argv)
 	/* re-open logger after all forks are done */
 	lg = Logger_create("ccowhttpd");
 	auth_init();
+	bucket_options_ht_create();
 
 	setpriority(PRIO_PROCESS, getpid(), -15);
 

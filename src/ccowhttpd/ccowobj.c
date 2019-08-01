@@ -45,6 +45,7 @@
 #include "request.h"
 #include "libauth/user.h"
 #include "libauth/auth.h"
+#include "libauth/bucket_options.h"
 #include "s3_generator.h"
 #include <sig2auth.h>
 #include <sig4auth.h>
@@ -633,8 +634,22 @@ static int on_edgex(ccowobj_handler_t *self, h2o_req_t *req,
 			send_error("Create io", err, req);
 			goto _exit;
 		}
+		// Bucket options
+		BUCKET_OPTIONS *bucket_options = NULL;
+		err = get_bucket_options(tc, self->cid, self->tid, bid, &bucket_options);
+		if (err) {
+			log_warn(lg, "Get bucket options error: %d", err);
+		} else {
+			log_info(lg, "Bucket %s options: %s", bid, bucket_options_to_string(bucket_options));
+		}
+
+
+		uint64_t expiration = get_object_expiration(bucket_options, oid);
+
+		log_info(lg, "Bucket %s expiration: %lu", bid, expiration);
+
 		// Create session
-		err = session_create(ci, comp, method_type, query_params, headers, &ss);
+		err = session_create(ci, comp, method_type, query_params, headers, expiration, &ss);
 		if (err) {
 			send_error("Create session", err, req);
 			goto _exit;

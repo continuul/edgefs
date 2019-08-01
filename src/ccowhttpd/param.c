@@ -164,16 +164,7 @@ param_add(char *key, int key_size, char *val, int val_size, param_vector *params
 
 	// Expand
 	if (params->size == params->capacity) {
-		params->capacity += params->capacity;
-		log_trace(lg, "Realloc to capacity: %d", params->capacity);
-		if (params->pool) {
-			param *new_pairs = h2o_mem_alloc_pool(params->pool, param, params->capacity);
-			memcpy(new_pairs, params->pairs, params->capacity / 2);
-			params->pairs = new_pairs;
-		} else
-			params->pairs = je_realloc(params->pairs, params->capacity*sizeof(param));
-		if (params->pairs == NULL)
-			return -ENOMEM;
+		return -ENOMEM;
 	}
 	param *q = &params->pairs[params->size];
 	if (params->flags & ALLOCATE_ON) {

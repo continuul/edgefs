@@ -201,6 +201,13 @@ objio_modify_defaults(objio_info_t *ci)
 			return err;
 	}
 
+	if (ci->expiration) {
+		err = ccow_attr_modify_default(ci->c, CCOW_ATTR_OBJECT_DELETE_AFTER,
+		    (void *)&ci->expiration, NULL);
+		if (err)
+			return err;
+	}
+
 	if (ci->sync_put) {
 		err = ccow_attr_modify_default(ci->c, CCOW_ATTR_SYNC_PUT,
 		    (void *)&ci->sync_put, NULL);
